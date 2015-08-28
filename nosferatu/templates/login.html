@@ -1,0 +1,52 @@
+{% macro with_errors(field) %}
+  <div class="form_field">
+    {{ field.label(**kwargs) }}:
+    {% if field.errors %}
+      {% set css_class = 'has_error ' + kwargs.pop('class', '') %}
+      {{ field(class=login_input, **kwargs) }}
+      <ul class="errors">{% for error in field.errors %}<li>{{ error|e }}</li>{% endfor %}</ul>
+    {% else %}
+      {{ field(**kwargs) }}
+    {% endif %}
+  </div>
+{% endmacro %}
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+
+    <title>Nosferatu</title>
+
+    {% assets "common_css" %}
+        <link rel="stylesheet" type="text/css" href="{{ ASSET_URL }}" />
+    {% endassets %}
+    {% assets "common_js" %}
+        <script type="text/javascript" href="{{ ASSET_URL }}"></script>
+    {% endassets %}
+    <style>
+      .container {
+        max-width: 1000px;
+      }
+    </style>
+  </head>
+  <body>
+      <a href="{{url_for('user.login')}}">ASDF</a>
+    <div class="container">
+      <h1>Nosferatu</h1>
+      <form method='POST' action='/login'>
+        <div class="form-group">
+          {{ with_errors(form.username, style='font-weight: bold; display: inline-block;') }}
+          {{ with_errors(form.password, type='password', style='font-weight: bold; display: inline-block;') }}
+
+          <div>
+            {{ form.remember.label(style='display: inline-block;') }}:
+            {{ form.remember(class="login_remember", style='display: inline-block;') }}
+          </div>
+        </div>
+        <button type="submit" class="btn btn-default">Submit</button>
+      </form>
+    </div>
+  </body>
+</html>

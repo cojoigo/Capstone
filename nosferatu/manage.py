@@ -3,6 +3,7 @@ from flask_assets import ManageAssets
 from assets import environment
 from flask.ext.migrate import Migrate, MigrateCommand
 from flask.ext.script import Manager
+
 from nosferatu import app, db
 
 app.config.from_object(os.environ['APP_SETTINGS'])

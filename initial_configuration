@@ -1,0 +1,50 @@
+#!/bin/bash
+
+sudo apt-get install python3-dev nginx supervisor git libpq-dev libffi-dev postgresql postgresql-contrib
+sudo -u capstone createdb nosferatu
+curl -O https://bootstrap.pypa.io/get-pip.py
+sudo python3 get-pip.py
+pip install virtualenvwrapper
+git clone https://github.com/cojoigo/Capstone.git
+
+cat "
+export WORKON_HOME=~/.virtualenvs
+VIRTUALENVWRAPPER_PYTHON='/usr/bin/python3'
+PROJECT_HOME='/home/capstone/Capstone'
+source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc
+
+source ~/.bashrc
+mkproject nosferatu
+pip install gunicorn flask psycopg2 Flask-SQLAlchemy Flask-Migrate
+
+sudo rm /etc/nginx/sites-enabled/default
+sudo rm /etc/nginx/sites-available/nosferatu.conf
+sudo ln -s config/ngnix.conf /etc/nginx/sites-enabled/
+
+echo '
+server {
+    location / {
+        proxy_pass http://localhost:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+    location /static {
+        alias  /home/nosferatu/static/;
+    }
+} >/etc/nginx/sites-available/nosferatu.conf
+
+echo '
+[program:nosferatu]
+command = /home/capstone/Capstone/nosferatu/bin/gunicorn_start
+user = capstone
+stdout_logfile = /home/capstone/Capstone/logs/gunicorn_supervisor.log
+redirect_stderr = true
+environment=LANG=en_US.UTF-8,LC_ALL=en_US.UTF-8
+>/etc/supervisor/conf.d/nosferatu.conf
+
+sudo /etc/init.d/nginx restart
+sudo pkill gunicorn
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl reread
+sudo supervisorctl restart nosferatu

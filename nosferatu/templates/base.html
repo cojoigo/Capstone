@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nosferatu</title>
+
+    <!-- <!&#45;&#45; Bootstrap &#45;&#45;> -->
+    <!-- <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet"> -->
+
+    {% assets "common_css" %}
+        <link rel="stylesheet" type="text/css" href="{{ ASSET_URL }}" />
+    {% endassets %}
+    {% assets "common_js" %}
+        <script type="text/javascript" href="{{ ASSET_URL }}"></script>
+    {% endassets %}
+    <style>
+      .container {
+        max-width: 1000px;
+      }
+      hr { border-color: #cccccc; margin: 0; }
+      .no-margins { margin: 0px; }
+      .with-margins { margin: 10px; }
+      .col-centered { float: none; margin: 0 auto; }
+    </style>
+  </head>
+<body>
+    {% block body %}
+    <nav class="top-bar" data-topbar role="navigation">
+      <ul class="title-area">
+        <li class="name">
+          <h1><a href="/">Nosferatu</a></h1>
+        </li>
+        <li class="toggle-topbar menu-icon">
+          <a><img src=""></img></a>
+        </li>
+      </ul>
+      <section class="top-bar-section">
+          {% block menu %}
+          <ul class="left">
+            <li>
+              <a href="/">Home</a>
+            </li>
+          </ul>
+          {% endblock %}
+        <ul class="right">
+          {% if current_user.is_authenticated() %}
+            <li><a href="{{ url_for('user.profile') }}">{{ current_user.username }}</a></li>
+            &nbsp; | &nbsp;
+            <li><a href="{{ url_for('user.logout') }}">Sign out</a></li>
+          {% else %}
+            <li><a href="{{ url_for('user.login') }}">Sign in</a></li>
+          {% endif %}
+        </ul>
+      </section>
+    </nav>
+
+    <div id="main-div">
+      {# One-time system messages called Flash messages #}
+      {% block flash_messages %}
+          {%- with messages = get_flashed_messages(with_categories=true) -%}
+              {% if messages %}
+                  {% for category, message in messages %}
+                      {% if category=='error' %}
+                          {% set category='danger' %}
+                      {% endif %}
+                      <div class="alert-box {{category}}">{{ message|safe }}</div>
+                  {% endfor %}
+              {% endif %}
+          {%- endwith %}
+      {% endblock %}
+
+      {% block main %}{% block content %}{% endblock %}{% endblock %}
+    </div>
+
+    <br/>
+    <div class="footer">
+      <div class="row full-width">
+        <div class="small-12 columns">
+          <p class="slogan">We'll hash slinging slash your electric bill</p>
+          <p class="links">
+            <a>Nosferatu v1.0</a>
+            <a>GDJC&#0178; Co.</a>
+          </p>
+          <p class="copywrite">&copy; 2015</p>
+        </p>
+      </div>
+    </div>
+    {% endblock %}
+  </body>
+</html>

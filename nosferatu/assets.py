@@ -2,8 +2,9 @@ from flask.ext.assets import Bundle, Environment
 
 environment = Environment()
 environment.register(
-    'common_css', 
+    'common_css',
     Bundle(
+        'vendor/foundation/css/normalize.css',
         'vendor/foundation/css/foundation.min.css',
         Bundle(
             'css/layout.scss',

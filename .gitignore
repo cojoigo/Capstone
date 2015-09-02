@@ -1,3 +1,9 @@
+# Custom
+nosferatu/dump.rdb
+nosferatu/gunicorn.pid
+nosferatu/static/public/
+nosferatu/static/.webassets-cache/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -8,7 +14,6 @@ __pycache__/
 # Distribution / packaging
 .Python
 env/
-bin/
 build/
 develop-eggs/
 dist/
@@ -97,3 +102,4 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+

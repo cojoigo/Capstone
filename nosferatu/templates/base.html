@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="nosferatuApp">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -10,10 +10,10 @@
     <!-- <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet"> -->
 
     {% assets "common_css" %}
-        <link rel="stylesheet" type="text/css" href="{{ ASSET_URL }}" />
+        <link type="text/css" rel="stylesheet" href="{{ ASSET_URL }}" />
     {% endassets %}
     {% assets "common_js" %}
-        <script type="text/javascript" href="{{ ASSET_URL }}"></script>
+        <script type="text/javascript" src="{{ ASSET_URL }}"></script>
     {% endassets %}
     <style>
       .container {
@@ -25,7 +25,7 @@
       .col-centered { float: none; margin: 0 auto; }
     </style>
   </head>
-<body>
+<body id="body">
     {% block body %}
     <nav class="top-bar" data-topbar role="navigation">
       <ul class="title-area">
@@ -46,8 +46,8 @@
           {% endblock %}
         <ul class="right">
           {% if current_user.is_authenticated() %}
-            <li><a href="{{ url_for('user.profile') }}">{{ current_user.username }}</a></li>
-            &nbsp; | &nbsp;
+            <li><a href="">{{ current_user.email }}</a></li>
+            <li class="divider"></li>
             <li><a href="{{ url_for('user.logout') }}">Sign out</a></li>
           {% else %}
             <li><a href="{{ url_for('user.login') }}">Sign in</a></li>

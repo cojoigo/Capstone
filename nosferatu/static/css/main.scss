@@ -1,8 +1,34 @@
+html {
+  height: unset;
+  min-height: 100%;
+  position: relative;
+}
+
+body {
+  height: auto;
+  margin-bottom: 150px;
+  position: static;
+}
+
+#main-div {
+  height: auto;
+  width: 100%;
+}
+
+.form-group {
+  padding-left: 2rem;
+  width: 50%;
+}
+
 .footer {
   background-color: #292c2f;
-  text-align: center;
+  bottom: 0px;
   font-size: 1.2rem;
-  padding: 4rem;
+  height: 150px;
+  left: 0px;
+  position: absolute;
+  text-align: center;
+  width: 100%;
   p {
     &.slogan {
       color: #8d9093;
@@ -16,11 +42,11 @@
     }
   }
   .links a {
-    list-style: none;
-    font-weight: bold;
     color: #ffffff;
-    padding: 3rem 0 2rem;
+    font-weight: bold;
+    list-style: none;
     margin: 0;
+    padding: 3rem 0 2rem;
     &::after {
       content: "•";
       padding: 0 0.4rem 0 0.8rem;
@@ -30,9 +56,4 @@
       padding: 0 0.4rem 0 0.8rem;
     }
   }
-}
-
-.form-group {
-  width: 50%;
-  padding-left: 2rem;
 }

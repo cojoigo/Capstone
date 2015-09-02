@@ -15,10 +15,11 @@ class Node(db.Model):
     mac_addr = db.Column(postgresql.MACADDR)
     user_id = db.Column(db.Integer, ForeignKey('users.id'))
 
-    def __init__(self, name, ip_addr, mac_addr):
+    def __init__(self, name, ip_addr, mac_addr, user_id):
         self.name = name
         self.ip_addr = ip_addr
         self.mac_addr = mac_addr
+        user_id = user_id
 
     def __repr__(self):
         return '<id {}>'.format(self.id)

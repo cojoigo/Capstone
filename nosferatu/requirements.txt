@@ -2,6 +2,7 @@ alembic==0.8.0
 bcrypt==2.0.0
 blinker==1.4
 cffi==1.2.1
+click==5.1
 cssmin==0.2.0
 debug==0.3.1
 decorator==4.0.2
@@ -31,7 +32,9 @@ psycopg2==2.6.1
 pycparser==2.14
 pycrypto==2.6.1
 python-editor==0.3
+redis==2.10.3
 requests==2.7.0
+rq==0.5.5
 see==1.1.1
 simplegeneric==0.8.1
 six==1.9.0

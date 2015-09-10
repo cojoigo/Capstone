@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+export WORKON_HOME=~/.virtualenvs
+export VIRTUALENVWRAPPER_PYTHON='/usr/bin/python3'
+export PROJECT_HOME=~/Capstone/nosferatu
+source /usr/local/bin/virtualenvwrapper.sh
+
+workon nosferatu
+python $PROJECT_HOME/worker.py

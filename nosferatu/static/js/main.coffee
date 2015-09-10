@@ -5,8 +5,8 @@
         $interpolateProvider.endSymbol(']}')
     ])
     app.controller(
-        'nosferatuController', ['$scope', '$log', '$http', '$timeout',
-        ($scope, $log, $http, $timeout) ->
+        'nosferatuController',
+        ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
             submitButtonTexts = {false: 'Search for Node', true: 'Loading...'}
             $scope.loading = false
             $scope.submitButtonText = submitButtonTexts[$scope.loading]

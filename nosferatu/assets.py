@@ -1,8 +1,6 @@
 from flask.ext.assets import Bundle, Environment
-import webassets_ng_annotate
 
 
-webassets_ng_annotate.register()
 environment = Environment()
 environment.register(
     'common_css',

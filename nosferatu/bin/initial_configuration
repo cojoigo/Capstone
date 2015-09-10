@@ -7,13 +7,11 @@ sudo python3 get-pip.py
 pip install virtualenvwrapper
 git clone https://github.com/cojoigo/Capstone.git
 
-cat "
 export WORKON_HOME=~/.virtualenvs
 VIRTUALENVWRAPPER_PYTHON='/usr/bin/python3'
 PROJECT_HOME='/home/capstone/Capstone'
-source /usr/local/bin/virtualenvwrapper.sh" >> ~/.bashrc
+source /usr/local/bin/virtualenvwrapper.sh
 
-source ~/.bashrc
 mkproject nosferatu
 pip install gunicorn flask psycopg2 Flask-SQLAlchemy Flask-Migrate
 

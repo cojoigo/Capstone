@@ -1,48 +1,18 @@
 #!/bin/bash
 
-sudo apt-get install python3-dev nginx supervisor git libpq-dev libffi-dev postgresql postgresql-contrib
-sudo -u capstone createdb nosferatu
-curl -O https://bootstrap.pypa.io/get-pip.py
-sudo python3 get-pip.py
-pip install virtualenvwrapper
-git clone https://github.com/cojoigo/Capstone.git
+mkdir nosferatu_setup
+cd nosferatu_setup
+wget https://raw.githubusercontent.com/cojoigo/Capstone/master/nosferatu/bin/setup/install_deps -q
+wget https://raw.githubusercontent.com/cojoigo/Capstone/master/nosferatu/bin/setup/create_user -q
+wget https://raw.githubusercontent.com/cojoigo/Capstone/master/nosferatu/bin/setup/configure_production -q
+wget https://raw.githubusercontent.com/cojoigo/Capstone/master/nosferatu/bin/setup/create_project -q
+wget https://raw.githubusercontent.com/cojoigo/Capstone/master/nosferatu/bin/setup/start_services -q
+chmod u+x *
+./install_deps
+./create_user
+./configure_production
+./create_project
+./start_services
 
-export WORKON_HOME=~/.virtualenvs
-VIRTUALENVWRAPPER_PYTHON='/usr/bin/python3'
-PROJECT_HOME='/home/capstone/Capstone'
-source /usr/local/bin/virtualenvwrapper.sh
-
-mkproject nosferatu
-pip install gunicorn flask psycopg2 Flask-SQLAlchemy Flask-Migrate
-
-sudo rm /etc/nginx/sites-enabled/default
-sudo rm /etc/nginx/sites-available/nosferatu.conf
-sudo ln -s config/ngnix.conf /etc/nginx/sites-enabled/
-
-echo '
-server {
-    location / {
-        proxy_pass http://localhost:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-    location /static {
-        alias  /home/nosferatu/static/;
-    }
-} >/etc/nginx/sites-available/nosferatu.conf
-
-echo '
-[program:nosferatu]
-command = /home/capstone/Capstone/nosferatu/bin/gunicorn_start
-user = capstone
-stdout_logfile = /home/capstone/Capstone/logs/gunicorn_supervisor.log
-redirect_stderr = true
-environment=LANG=en_US.UTF-8,LC_ALL=en_US.UTF-8
->/etc/supervisor/conf.d/nosferatu.conf
-
-sudo /etc/init.d/nginx restart
-sudo pkill gunicorn
-sudo supervisorctl reread
-sudo supervisorctl update
-sudo supervisorctl reread
-sudo supervisorctl restart nosferatu
+cd ..
+rm -rf nosferatu_setup

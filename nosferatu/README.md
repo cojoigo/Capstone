@@ -6,20 +6,23 @@ Nosferatu is a home automation webapp written in python and coffeescript using F
 
 ## Quick Start
 
-To set up all of the prerequisites for running **Nosferatu**, run the following command:
-
-    wget https://raw.githubusercontent.com/cojoigo/Capstone/master/nosferatu/bin/initial_configuration; chmod u+x initial_configuration; sudo ./initial_configuration
-
-\***Note**\* This command will prompt you a number of times throughout the process, and will have the side effect of creating a new **capstone** `sudo` user
-
-After running this, append the following to your `.bashrc`, then run `source ~/.bashrc`
+Append the following to your `.bashrc`, then run `source ~/.bashrc`
 
     export WORKON_HOME=~/.virtualenvs
     VIRTUALENVWRAPPER_PYTHON='/usr/bin/python3'
     PROJECT_HOME='/home/capstone/Capstone'
     source /usr/local/bin/virtualenvwrapper.sh
 
+To set up all of the prerequisites for running **Nosferatu**, run the following command:
 
+    sudo adduser capstone -q
+    sudo adduser capstone sudo -q
+    su - capstone
+    wget https://raw.githubusercontent.com/cojoigo/Capstone/master/nosferatu/bin/initial_configuration; chmod u+x initial_configuration; ./initial_configuration; rm initial_configuration -f
+
+\***Note**\* This command will prompt you a number of times throughout the process, and will have the side effect of creating a new **capstone** `sudo` user
+
+----
 At this point, you should be able to start the webapp by running
 
     sudo supervisorctl restart nosferatu:redis_server

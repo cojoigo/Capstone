@@ -1,0 +1,53 @@
+#!/bin/bash
+
+sudo rm -f /etc/nginx/sites-available/nosferatu.conf
+sudo rm -f /etc/nginx/sites-enabled/nosferatu.conf
+sudo ln -s /etc/nginx/sites-available/nosferatu.conf /etc/nginx/sites-enabled/
+sudo touch /etc/nginx/sites-available/nosferatu.conf
+sudo bash -c 'cat << "EOF" > /etc/nginx/sites-available/nosferatu.conf
+server {
+    listen 80;
+    location / {
+        proxy_pass_header Server;
+        proxy_redirect off;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Scheme $scheme;
+        proxy_connect_timeout 10;
+        proxy_read_timeout 10;
+        proxy_pass http://localhost:8000/;
+    }
+    location /static/ {
+        alias /home/capstone/Capstone/nosferatu/nosferatu/static/;
+    }
+    error_page 500 502 503 504 /home/capstone/capstone/nosferatu/nosferatu/static/error.html;
+}
+EOF'
+sudo rm -f /etc/nginx/sites-enabled/default
+
+sudo touch /etc/supervisor/conf.d/nosferatu.conf
+sudo bash -c 'cat << "EOF" > /etc/supervisor/conf.d/nosferatu.conf
+[group:nosferatu]
+programs=gunicorn,redis_server,redis_worker
+
+[program:gunicorn]
+command = /home/capstone/Capstone/nosferatu/bin/gunicorn_start
+user = capstone
+stdout_logfile = /home/capstone/Capstone/nosferatu/logs/gunicorn_supervisor.log
+redirect_stderr = true
+environment=LANG=en_US.UTF-8,LC_ALL=en_US.UTF-8
+
+[program:redis_server]
+command = redis-server
+user = capstone
+stdout_logfile = /home/capstone/Capstone/nosferatu/logs/redis_server.log
+redirect_stderr = true
+environment=LANG=en_US.UTF-8,LC_ALL=en_US.UTF-8
+
+[program:redis_worker]
+command = /home/capstone/Capstone/nosferatu/bin/redis_start
+user = capstone
+stdout_logfile = /home/capstone/Capstone/nosferatu/logs/redis_worker.log
+redirect_stderr = true
+environment=LANG=en_US.UTF-8,LC_ALL=en_US.UTF-8
+EOF'

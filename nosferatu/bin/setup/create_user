@@ -1,0 +1,6 @@
+#!/bin/bash
+
+if !(sudo -u postgres users | grep -q "capstone capstone"); then
+  sudo -u postgres createuser -s capstone
+  sudo -u capstone createdb nosferatu
+fi

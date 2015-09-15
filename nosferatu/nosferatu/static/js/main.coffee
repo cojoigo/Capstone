@@ -1,5 +1,5 @@
 (() ->
-    app = angular.module('nosferatuApp', [])
+    app = angular.module('nosferatuApp', ['mm.foundation'])
     app.config(['$interpolateProvider', ($interpolateProvider) ->
         $interpolateProvider.startSymbol('{[')
         $interpolateProvider.endSymbol(']}')
@@ -18,7 +18,7 @@
                     .success((results) ->
                         $log.log(results)
                         $scope.findNewNodes(results)
-                        $scope.ip_addr = null
+                        $scope.nodes = []
                         $scope.loading = true
                         $scope.submitButtonText = submitButtonTexts[$scope.loading]
                     )
@@ -38,7 +38,7 @@
                                 $log.log(data)
                                 $scope.loading = false
                                 $scope.submitButtonText = submitButtonTexts[$scope.loading]
-                                $scope.ip_addr = data.ip
+                                $scope.nodes = [data]
                                 $timeout.cancel(timeout)
                                 return false
 

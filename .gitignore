@@ -1,8 +1,8 @@
 # Custom
 nosferatu/dump.rdb
 nosferatu/gunicorn.pid
-nosferatu/static/public/
-nosferatu/static/.webassets-cache/
+nosferatu/nosferatu/static/public/
+nosferatu/nosferatu/static/.webassets-cache/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

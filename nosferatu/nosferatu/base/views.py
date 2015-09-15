@@ -56,6 +56,7 @@ def get_registered_node(job_key):
             'ip': '1.2.3.4',
             'mac': ':#:$:$:#:',
             'userid': 363456,
+            'status': 'on',
         }
         return jsonify(nodes)
     else:

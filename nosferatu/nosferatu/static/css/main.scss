@@ -57,3 +57,11 @@ body {
     }
   }
 }
+
+.tabs dd.active a {
+  background-color: #008CBA;
+}
+
+.tabs dd.active a, .status_on {
+  background-color: #008CBA;
+}

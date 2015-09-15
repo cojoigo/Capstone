@@ -3,11 +3,18 @@
 {% block main %}
   <div class="container" ng-controller="nosferatuController">
     <form role="form" ng-submit="searchForNode()">
-        <button type="submit" class="btn btn-default" ng-disabled="loading">{[submitButtonText]}</button>
+      <button type="submit" class="btn btn-default" ng-disabled="loading">{[submitButtonText]}</button>
+      <img class="col-sm-3 col-sm-offset-4" src="/static/img/spinner.gif" ng-show="loading">
     </form>
-    <div id="nodes">
-        {[ ip_addr ]}
-    </div>
-    <img class="col-sm-3 col-sm-offset-4" src="/static/img/spinner.gif" ng-show="loading">
+
+    <hr />
+    <tabset vertical="true">
+      <tab heading="Main">
+        Main!
+      </tab>
+      <tab ng-repeat="node in nodes" heading="{[node.ip]}">
+        {[node.id]}!
+      </tab>
+    </tabset>
   </div>
 {% endblock %}

@@ -27,6 +27,7 @@ To set up all of the prerequisites for running **Nosferatu**, run the following 
     bash -c 'cat << "EOF" > config.py
     SECRET_KEY = 'this-really-needs-to-be-changed'
     SQLALCHEMY_DATABASE_URI = 'postgresql:///nosferatu'
+    PROPAGATE_EXCEPTIONS = True
     EOF'
 
 

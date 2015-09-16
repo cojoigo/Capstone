@@ -17,7 +17,7 @@ environment.register(
 environment.register(
     'common_js',
     Bundle(
-        'js/lib/jquery-2.1.4.min.js',
+        'js/lib/jquery.min.js',
         'js/lib/angular.min.js',
         'js/lib/foundation.min.js',
         'js/lib/mm-foundation-tpls-0.6.0.min.js',

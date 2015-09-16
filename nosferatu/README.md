@@ -18,7 +18,10 @@ To set up all of the prerequisites for running **Nosferatu**, run the following 
     sudo adduser capstone -q
     sudo adduser capstone sudo -q
     su - capstone
-    wget https://raw.githubusercontent.com/cojoigo/Capstone/master/nosferatu/bin/initial_configuration; chmod u+x initial_configuration; ./initial_configuration; rm initial_configuration -f
+    wget https://raw.githubusercontent.com/cojoigo/Capstone/master/nosferatu/bin/initial_configuration
+    chmod u+x initial_configuration
+    ./initial_configuration
+    rm initial_configuration -f
     cd Capstone/nosferatu/
     mkdir instance
     bash -c 'cat << "EOF" > config.py
@@ -30,10 +33,9 @@ To set up all of the prerequisites for running **Nosferatu**, run the following 
 \***Note**\* This command will prompt you a number of times throughout the process, and will have the side effect of creating a new **capstone** `sudo` user
 
 ----
-At this point, you should be able to start the webapp by running
+At this point, you should be able to start the webapp by running (though it *should* already be running)
 
-    sudo supervisorctl restart nosferatu:redis_server
-    sudo supervisorctl restart nosferatu:redis_worker
+    sudo supervisorctl restart nosferatu:celery
     sudo supervisorctl restart nosferatu:gunicorn
 
 

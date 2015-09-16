@@ -12,7 +12,7 @@
       <tab heading="Main">
         Main!
       </tab>
-      <tab ng-repeat="node in nodes" heading="{[node.ip]}">
+      <tab ng-repeat="node in nodes" heading="{[node.ip]}" ng-class="{[node.status]}">
         {[node.id]}!
       </tab>
     </tabset>

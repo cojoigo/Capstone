@@ -1,6 +1,7 @@
 # Custom
 nosferatu/dump.rdb
 nosferatu/gunicorn.pid
+nosferatu/instance/
 nosferatu/nosferatu/static/public/
 nosferatu/nosferatu/static/.webassets-cache/
 

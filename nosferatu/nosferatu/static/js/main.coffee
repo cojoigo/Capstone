@@ -10,6 +10,16 @@
             submitButtonTexts = {false: 'Search for Node', true: 'Loading...'}
             $scope.loading = false
             $scope.submitButtonText = submitButtonTexts[$scope.loading]
+            $scope.nodes = []
+
+            $http.get('/registered_nodes')
+                .success((results) ->
+                    $log.log('registered nodes', results)
+                    $scope.nodes.push(results)
+                )
+                .error((error) ->
+                    $log.log(error)
+                )
 
             $scope.searchForNode = () ->
                 $log.log('Testing')
@@ -18,7 +28,6 @@
                     .success((results) ->
                         $log.log(results)
                         $scope.findNewNodes(results)
-                        $scope.nodes = []
                         $scope.loading = true
                         $scope.submitButtonText = submitButtonTexts[$scope.loading]
                     )
@@ -38,7 +47,8 @@
                                 $log.log(data)
                                 $scope.loading = false
                                 $scope.submitButtonText = submitButtonTexts[$scope.loading]
-                                $scope.nodes = [data]
+                                $scope.nodes.push(data)
+                                console.log('data', data, $schope.nodes)
                                 $timeout.cancel(timeout)
                                 return false
 

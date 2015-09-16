@@ -13,12 +13,19 @@ Append the following to your `.bashrc`, then run `source ~/.bashrc`
     PROJECT_HOME='/home/capstone/Capstone'
     source /usr/local/bin/virtualenvwrapper.sh
 
-To set up all of the prerequisites for running **Nosferatu**, run the following command:
+To set up all of the prerequisites for running **Nosferatu**, run the following commands:
 
     sudo adduser capstone -q
     sudo adduser capstone sudo -q
     su - capstone
     wget https://raw.githubusercontent.com/cojoigo/Capstone/master/nosferatu/bin/initial_configuration; chmod u+x initial_configuration; ./initial_configuration; rm initial_configuration -f
+    cd Capstone/nosferatu/
+    mkdir instance
+    bash -c 'cat << "EOF" > config.py
+    SECRET_KEY = 'this-really-needs-to-be-changed'
+    SQLALCHEMY_DATABASE_URI = 'postgresql:///nosferatu'
+    EOF'
+
 
 \***Note**\* This command will prompt you a number of times throughout the process, and will have the side effect of creating a new **capstone** `sudo` user
 

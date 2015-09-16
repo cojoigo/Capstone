@@ -1,13 +1,13 @@
 import logging
-from flask import render_template, request, redirect, url_for, jsonify
+
+from flask import render_template, jsonify
 from flask_user import login_required
 from flask_user.signals import user_sent_invitation, user_registered
 from rq.job import Job
 
-from nosferatu import app, q, db
-from worker import conn
-
-from base.models import Node
+from . import app, cache, db, q
+from .worker import conn
+from .models import Node
 
 log = logging.getLogger('debug')
 
@@ -20,6 +20,7 @@ def after_registered_hook(sender, user, user_invite):
 @user_sent_invitation.connect_via(app)
 def after_invitation_hook(sender, **kwargs):
     log.info('USER SENT INVITATION')
+
 
 def search_for_node():
     try:
@@ -39,8 +40,38 @@ def search_for_node():
         return "ASDF"
         pass
 
+
+@app.route('/nodes/<node_id>', methods=['GET'])
+@cache.memoize(timeout=5)
+def get_node_status(node_id):
+    pass
+
+
+@app.route('/registered_nodes', methods=['GET'])
+def registered_nodes(job_key):
+    nodes = [
+        {
+            'id': 12341234,
+            'ip': '1.2.3.4',
+            'mac': 'A0:2B:03:C3:F3',
+            'on': True,
+        }, {
+            'id': 12341235,
+            'ip': '2.2.3.4',
+            'mac': 'A0:2B:03:C3:F5',
+            'on': False,
+        }, {
+            'id': 12341236,
+            'ip': '3.2.3.4',
+            'mac': 'A0:2B:03:C3:F4',
+            'on': True,
+        }
+    ]
+    return jsonify(nodes)
+
+
 @app.route('/registered_nodes/<job_key>', methods=['GET'])
-def get_registered_node(job_key):
+def get_new_node(job_key):
     print(job_key)
     job = Job.fetch(job_key, connection=conn)
     if job.is_finished:
@@ -56,11 +87,12 @@ def get_registered_node(job_key):
             'ip': '1.2.3.4',
             'mac': ':#:$:$:#:',
             'userid': 363456,
-            'status': 'on',
+            'on': True,
         }
         return jsonify(nodes)
     else:
         return 'ERROR', 202
+
 
 @app.route('/register_node', methods=['POST'])
 def register_node():
@@ -68,6 +100,7 @@ def register_node():
     log.info(job.get_id())
     print(job.get_id())
     return job.get_id()
+
 
 @app.route('/', methods=['GET', 'POST'])
 @login_required

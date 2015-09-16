@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-export APP_SETTINGS="config.DevelopmentConfig"
-export DATABASE_URL="postgresql:///nosferatu"
 export WORKON_HOME=~/.virtualenvs
 export VIRTUALENVWRAPPER_PYTHON='/usr/bin/python3'
 export PROJECT_HOME='/home/capstone/Capstone/nosferatu'
@@ -9,5 +7,4 @@ source /usr/local/bin/virtualenvwrapper.sh
 
 workon nosferatu
 pkill gunicorn
-cd nosferatu
 gunicorn nosferatu:app --reload

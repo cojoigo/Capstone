@@ -1,4 +1,3 @@
-import os
 from datetime import timedelta
 
 APP_NAME = 'Nosferatu'
@@ -6,6 +5,9 @@ DEBUG = False
 CSRF_ENABLED = True
 REMEMBER_COOKIE_DURATION = timedelta(days=3)
 TESTING = False
+
+CELERY_BROKER_URL = 'redis://localhost:6379',
+CELERY_RESULT_BACKEND = 'redis://localhost:6379'
 
 # Flask-User Config
 USER_APP_NAME = 'Nosferatu'

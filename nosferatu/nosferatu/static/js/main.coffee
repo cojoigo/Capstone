@@ -15,10 +15,11 @@
             $http.get('/registered_nodes')
                 .success((results) ->
                     $log.log('registered nodes', results)
-                    $scope.nodes.push(results)
+                    Array::push.apply($scope.nodes, results.items)
+                    console.log('nodes!', $scope.nodes)
                 )
                 .error((error) ->
-                    $log.log(error)
+                    $log.log('Initial node list:', error)
                 )
 
             $scope.searchForNode = () ->
@@ -48,7 +49,7 @@
                                 $scope.loading = false
                                 $scope.submitButtonText = submitButtonTexts[$scope.loading]
                                 $scope.nodes.push(data)
-                                console.log('data', data, $schope.nodes)
+                                console.log('data', data, $scope.nodes)
                                 $timeout.cancel(timeout)
                                 return false
 

@@ -28,26 +28,19 @@ sudo rm -f /etc/nginx/sites-enabled/default
 sudo touch /etc/supervisor/conf.d/nosferatu.conf
 sudo bash -c 'cat << "EOF" > /etc/supervisor/conf.d/nosferatu.conf
 [group:nosferatu]
-programs=gunicorn,redis_server,redis_worker
+programs=gunicorn,celery
 
 [program:gunicorn]
-command = /home/capstone/Capstone/nosferatu/bin/gunicorn_start
+command = /home/capstone/Capstone/nosferatu/bin/start_gunicorn
 user = capstone
-stdout_logfile = /home/capstone/Capstone/nosferatu/logs/gunicorn_supervisor.log
+stdout_logfile = /home/capstone/Capstone/nosferatu/logs/gunicorn.log
 redirect_stderr = true
 environment=LANG=en_US.UTF-8,LC_ALL=en_US.UTF-8
 
-[program:redis_server]
-command = redis-server
+[program:celery]
+command = /home/capstone/Capstone/nosferatu/bin/start_celery
 user = capstone
-stdout_logfile = /home/capstone/Capstone/nosferatu/logs/redis_server.log
-redirect_stderr = true
-environment=LANG=en_US.UTF-8,LC_ALL=en_US.UTF-8
-
-[program:redis_worker]
-command = /home/capstone/Capstone/nosferatu/bin/redis_start
-user = capstone
-stdout_logfile = /home/capstone/Capstone/nosferatu/logs/redis_worker.log
+stdout_logfile = /home/capstone/Capstone/nosferatu/logs/celery.log
 redirect_stderr = true
 environment=LANG=en_US.UTF-8,LC_ALL=en_US.UTF-8
 EOF'

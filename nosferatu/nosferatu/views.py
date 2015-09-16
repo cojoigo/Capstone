@@ -3,10 +3,8 @@ import logging
 from flask import render_template, jsonify
 from flask_user import login_required
 from flask_user.signals import user_sent_invitation, user_registered
-from rq.job import Job
 
-from . import app, cache, db, q
-from .worker import conn
+from . import app, cache, celery, db
 from .models import Node
 
 log = logging.getLogger('debug')
@@ -22,7 +20,8 @@ def after_invitation_hook(sender, **kwargs):
     log.info('USER SENT INVITATION')
 
 
-def search_for_node():
+@celery.task(bind=True)
+def search_for_node(self):
     try:
         return "QWER"
         node = Node(
@@ -48,7 +47,7 @@ def get_node_status(node_id):
 
 
 @app.route('/registered_nodes', methods=['GET'])
-def registered_nodes(job_key):
+def registered_nodes():
     nodes = [
         {
             'id': 12341234,
@@ -67,14 +66,14 @@ def registered_nodes(job_key):
             'on': True,
         }
     ]
-    return jsonify(nodes)
+    return jsonify(items=nodes)
 
 
-@app.route('/registered_nodes/<job_key>', methods=['GET'])
-def get_new_node(job_key):
-    print(job_key)
-    job = Job.fetch(job_key, connection=conn)
-    if job.is_finished:
+@app.route('/registered_nodes/<job_id>', methods=['GET'])
+def get_new_node(job_id):
+    log.debug(job_id)
+    job = search_for_node.AsyncResult(job_id)
+    if job.ready():
         # node = Node.query.filter_by(id=job.result).first()
         # nodes = {
         #     'id': node.id,
@@ -96,10 +95,9 @@ def get_new_node(job_key):
 
 @app.route('/register_node', methods=['POST'])
 def register_node():
-    job = q.enqueue_call(func=search_for_node)
-    log.info(job.get_id())
-    print(job.get_id())
-    return job.get_id()
+    job = search_for_node.apply_async()
+    log.debug(job.id)
+    return job.id
 
 
 @app.route('/', methods=['GET', 'POST'])

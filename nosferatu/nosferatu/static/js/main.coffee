@@ -1,5 +1,5 @@
 (() ->
-    app = angular.module('nosferatuApp', [])
+    app = angular.module('nosferatuApp', ['mm.foundation'])
     app.config(['$interpolateProvider', ($interpolateProvider) ->
         $interpolateProvider.startSymbol('{[')
         $interpolateProvider.endSymbol(']}')
@@ -10,6 +10,17 @@
             submitButtonTexts = {false: 'Search for Node', true: 'Loading...'}
             $scope.loading = false
             $scope.submitButtonText = submitButtonTexts[$scope.loading]
+            $scope.nodes = []
+
+            $http.get('/registered_nodes')
+                .success((results) ->
+                    $log.log('registered nodes', results)
+                    Array::push.apply($scope.nodes, results.items)
+                    console.log('nodes!', $scope.nodes)
+                )
+                .error((error) ->
+                    $log.log('Initial node list:', error)
+                )
 
             $scope.searchForNode = () ->
                 $log.log('Testing')
@@ -18,7 +29,6 @@
                     .success((results) ->
                         $log.log(results)
                         $scope.findNewNodes(results)
-                        $scope.ip_addr = null
                         $scope.loading = true
                         $scope.submitButtonText = submitButtonTexts[$scope.loading]
                     )
@@ -38,7 +48,8 @@
                                 $log.log(data)
                                 $scope.loading = false
                                 $scope.submitButtonText = submitButtonTexts[$scope.loading]
-                                $scope.ip_addr = data.ip
+                                $scope.nodes.push(data)
+                                console.log('data', data, $scope.nodes)
                                 $timeout.cancel(timeout)
                                 return false
 

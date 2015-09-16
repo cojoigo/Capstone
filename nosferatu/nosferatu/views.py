@@ -1,13 +1,11 @@
 import logging
-from flask import render_template, request, redirect, url_for, jsonify
+
+from flask import render_template, jsonify
 from flask_user import login_required
 from flask_user.signals import user_sent_invitation, user_registered
-from rq.job import Job
 
-from nosferatu import app, q, db
-from worker import conn
-
-from base.models import Node
+from . import app, cache, celery, db
+from .models import Node
 
 log = logging.getLogger('debug')
 
@@ -21,7 +19,9 @@ def after_registered_hook(sender, user, user_invite):
 def after_invitation_hook(sender, **kwargs):
     log.info('USER SENT INVITATION')
 
-def search_for_node():
+
+@celery.task(bind=True)
+def search_for_node(self):
     try:
         return "QWER"
         node = Node(
@@ -39,11 +39,41 @@ def search_for_node():
         return "ASDF"
         pass
 
-@app.route('/registered_nodes/<job_key>', methods=['GET'])
-def get_registered_node(job_key):
-    print(job_key)
-    job = Job.fetch(job_key, connection=conn)
-    if job.is_finished:
+
+@app.route('/nodes/<node_id>', methods=['GET'])
+@cache.memoize(timeout=5)
+def get_node_status(node_id):
+    pass
+
+
+@app.route('/registered_nodes', methods=['GET'])
+def registered_nodes():
+    nodes = [
+        {
+            'id': 12341234,
+            'ip': '1.2.3.4',
+            'mac': 'A0:2B:03:C3:F3',
+            'on': True,
+        }, {
+            'id': 12341235,
+            'ip': '2.2.3.4',
+            'mac': 'A0:2B:03:C3:F5',
+            'on': False,
+        }, {
+            'id': 12341236,
+            'ip': '3.2.3.4',
+            'mac': 'A0:2B:03:C3:F4',
+            'on': True,
+        }
+    ]
+    return jsonify(items=nodes)
+
+
+@app.route('/registered_nodes/<job_id>', methods=['GET'])
+def get_new_node(job_id):
+    log.debug(job_id)
+    job = search_for_node.AsyncResult(job_id)
+    if job.ready():
         # node = Node.query.filter_by(id=job.result).first()
         # nodes = {
         #     'id': node.id,
@@ -56,17 +86,19 @@ def get_registered_node(job_key):
             'ip': '1.2.3.4',
             'mac': ':#:$:$:#:',
             'userid': 363456,
+            'on': True,
         }
         return jsonify(nodes)
     else:
         return 'ERROR', 202
 
+
 @app.route('/register_node', methods=['POST'])
 def register_node():
-    job = q.enqueue_call(func=search_for_node)
-    log.info(job.get_id())
-    print(job.get_id())
-    return job.get_id()
+    job = search_for_node.apply_async()
+    log.debug(job.id)
+    return job.id
+
 
 @app.route('/', methods=['GET', 'POST'])
 @login_required

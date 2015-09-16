@@ -4,13 +4,13 @@ mkdir nosferatu_setup
 cd nosferatu_setup
 wget https://raw.githubusercontent.com/cojoigo/Capstone/master/nosferatu/bin/setup/install_deps -q
 wget https://raw.githubusercontent.com/cojoigo/Capstone/master/nosferatu/bin/setup/create_user -q
-wget https://raw.githubusercontent.com/cojoigo/Capstone/master/nosferatu/bin/setup/configure_production -q
+wget https://raw.githubusercontent.com/cojoigo/Capstone/master/nosferatu/bin/setup/configure_services -q
 wget https://raw.githubusercontent.com/cojoigo/Capstone/master/nosferatu/bin/setup/create_project -q
 wget https://raw.githubusercontent.com/cojoigo/Capstone/master/nosferatu/bin/setup/start_services -q
 chmod u+x *
 ./install_deps
 ./create_user
-./configure_production
+./configure_services
 ./create_project
 ./start_services
 

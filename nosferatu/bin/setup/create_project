@@ -3,9 +3,8 @@
 cd ~
 git clone https://github.com/cojoigo/Capstone.git >/dev/null 2>&1
 mkdir ~/Capstone/nosferatu/logs/
-touch ~/Capstone/nosferatu/logs/gunicorn_supervisor.log
-touch ~/Capstone/nosferatu/logs/redis_server.log
-touch ~/Capstone/nosferatu/logs/redis_worker.log
+touch ~/Capstone/nosferatu/logs/gunicorn.log
+touch ~/Capstone/nosferatu/logs/celery.log
 
 mkproject nosferatu
 workon nosferatu

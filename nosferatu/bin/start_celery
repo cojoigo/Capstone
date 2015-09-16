@@ -6,4 +6,4 @@ export PROJECT_HOME=~/Capstone/nosferatu
 source /usr/local/bin/virtualenvwrapper.sh
 
 workon nosferatu
-python $PROJECT_HOME/nosferatu/worker.py
+celery -A nosferatu.celery worker

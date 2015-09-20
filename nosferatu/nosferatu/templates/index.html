@@ -2,12 +2,49 @@
 
 {% block main %}
   <div class="container" ng-controller="nosferatuController">
-    <form role="form" ng-submit="searchForNode()">
-      <button type="submit" class="btn btn-default" ng-disabled="loading">{[submitButtonText]}</button>
-      <img class="col-sm-3 col-sm-offset-4" src="/static/img/spinner.gif" ng-show="loading">
-    </form>
+    <div>
+      <form role="form" ng-submit="findNodes()">
+        <button type="submit" class="btn btn-default" ng-disabled="findingNodes">{[submitButtonText]}</button>
+        <img class="col-sm-3 col-sm-offset-4" src="/static/img/spinner.gif" ng-show="loading">
+      </form>
+
+      <hr />
+
+      <tabset vertical="true">
+        <tab ng-repeat="node in foundNodes" heading="{[node.id]}">
+          <form role="form" ng-submit="addThisNode(node_id)">
+            <input type="text" name="{[node.id]}" ng-model="node_id" style="display: none" />
+            <div class="row">
+              <div class="small-4 columns">
+                <input type="text" placeholder="Node Name" />
+              </div>
+              <div class="small-4 columns">
+                <label>Node IP:
+                  <label>{[node.ip]}</label>
+                </label>
+              </div>
+              <div class="small-4 columns">
+                <label>Node MAC:
+                  <label>{[node.mac]}</label>
+                </label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="small-4 columns"></div>
+              <div class="small-4 columns">
+                <button type="button" ng-click="testFoundNode" ng-disabled="testingNode">{[testNodeBtnText]}</button>
+              </div>
+              <div class="small-4 columns">
+                <button type="submit" class="btn btn-default" ng-disabled="addingNode">Save</button>
+              </div>
+            </div>
+          </form>
+        </tab>
+      </tabset>
+    </div>
 
     <hr />
+
     <tabset vertical="true">
       <tab heading="Main">
         Main!

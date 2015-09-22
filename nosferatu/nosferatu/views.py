@@ -4,8 +4,9 @@ from flask import render_template, jsonify
 from flask_user import login_required
 from flask_user.signals import user_sent_invitation, user_registered
 
-from . import app, cache, celery, db, find_nodes_task
+from . import app, cache, celery, db
 from .models import Node
+from .tasks import *
 
 log = logging.getLogger('debug')
 
@@ -20,33 +21,14 @@ def after_invitation_hook(sender, **kwargs):
     log.info('USER SENT INVITATION')
 
 
-@celery.task(bind=True)
-def register_nodesdfa(self):
-    try:
-        return "QWER"
-        node = Node(
-            name="Test",
-            ip_addr='1.1.1.1',
-            mac_addr='40:6c:8f:40:98:4d',
-            user_id=3,
-        )
-        db.session.add(node)
-        db.session.commit()
-        print(node.id)
-        return node.id
-    except Exception as e:
-        log.exception(e)
-        return "ASDF"
-        pass
-
-
 @app.route('/nodes/<node_id>', methods=['GET'])
 @cache.memoize(timeout=5)
+@login_required
 def get_node_status(node_id):
     pass
 
-
 @app.route('/registered_nodes', methods=['GET'])
+@login_required
 def registered_nodes():
     nodes = [
         {
@@ -70,6 +52,7 @@ def registered_nodes():
 
 
 @app.route('/registered_nodes/<job_id>', methods=['GET'])
+@login_required
 def get_new_node(job_id):
     log.debug(job_id)
     job = search_for_node.AsyncResult(job_id)
@@ -94,53 +77,42 @@ def get_new_node(job_id):
 
 
 @app.route('/register_node', methods=['POST'])
+@login_required
 def register_node():
-    job = search_for_node.apply_async()
+    job = search_for_node.delay()
     log.debug(job.id)
     return job.id
 
 
-# @celery.task(bind=True)
-# def find_nodes_task(self):
-#     nodes = [
-#         {
-#             'id': 12341234,
-#             'ip': '1.2.3.4',
-#             'mac': 'A0:2B:03:C3:F3',
-#             'on': True,
-#         }, {
-#             'id': 12341235,
-#             'ip': '2.2.3.4',
-#             'mac': 'A0:2B:03:C3:F5',
-#             'on': False,
-#         }, {
-#             'id': 12341236,
-#             'ip': '3.2.3.4',
-#             'mac': 'A0:2B:03:C3:F4',
-#             'on': True,
-#         }
-#     ]
-#     return nodes
-
-
 @app.route('/find_nodes/<job_id>', methods=['GET'])
+@login_required
 def find_nodes(job_id):
     log.debug(job_id)
     job = find_nodes_task.AsyncResult(job_id)
     if job.ready():
-        try:
-            return jsonify(items=job.result)
-        except:
-            raise Exception(job, job.result)
+        return jsonify(items=job.result)
     else:
         return 'ERROR', 202
 
 
 @app.route('/find_nodes', methods=['POST'])
+@login_required
 def search_for_nodes():
-    job = find_nodes_task.apply_async()
+    job = find_nodes_task.delay()
     log.debug(job.id)
     return job.id
+
+
+@app.route('/nodes/<node_id>/test/start', methods=['GET'])
+@login_required
+def test_start(node_id):
+    job = test_node_task.delay(node_id)
+
+
+@app.route('/nodes/<node_id>/test/stop', methods=['GET'])
+@login_required
+def test_stop(node_id):
+    job = test_node_task.delay(node_id, stop=True)
 
 
 @app.route('/', methods=['GET', 'POST'])

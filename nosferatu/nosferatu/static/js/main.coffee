@@ -9,21 +9,16 @@
         ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
             submitButtonTexts = {false: 'Search for Node', true: 'Loading...'}
             $scope.findingNodes = false
-            $scope.addingNode = false
             $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
-            $scope.foundNodes = []
+
+            $scope.testingNode = false
+            testNodeBtnTexts = {false: 'Test', true: 'Stop'}
+            $scope.testNodeBtnText = testNodeBtnTexts[$scope.testingNode]
+
+            $scope.addingNode = false
 
             $scope.nodes = []
-
-            # $http.get('/registered_nodes')
-            #     .success((results) ->
-            #         $log.log('registered nodes', results)
-            #         Array::push.apply($scope.nodes, results.items)
-            #         console.log('nodes!', $scope.nodes)
-            #     )
-            #     .error((error) ->
-            #         $log.log('Initial node list:', error)
-            #     )
+            $scope.foundNodes = []
 
             $scope.loadExistingNodes = (jobId) ->
                 timeout = ''
@@ -47,9 +42,19 @@
                         )
                 poller()
 
-            $scope.addThisNode= (node_id) ->
-                $log.log("Adding this node")
-                if foundNodes.length == 0
+            $scope.testFoundNode = (nodeId) ->
+                nodeId = $scope.nodeId
+                $log.log("Testing node #{nodeId}")
+                action = 'start'
+                if not $scope.testingNode
+                    action = 'stop'
+                $scope.testingNode = not $scope.testingNode
+
+                $http.get("/nodes/#{nodeId}/test/#{action}")
+
+            $scope.addThisNode = (nodeId) ->
+                $log.log("Adding node #{nodeId}")
+                if $scope.foundNodes.length == 0
                     $scope.findingNodes = false
 
             $scope.findNodes = () ->
@@ -89,6 +94,6 @@
                             timeout = $timeout(poller, 2000)
                         )
                 poller()
-
-        ])
+        ]
+    )
 )()

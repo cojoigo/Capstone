@@ -107,12 +107,14 @@ def search_for_nodes():
 @login_required
 def test_start(node_id):
     job = test_node_task.delay(node_id)
+    return 'SUCCESS', 200
 
 
 @app.route('/nodes/<node_id>/test/stop', methods=['GET'])
 @login_required
 def test_stop(node_id):
     job = test_node_task.delay(node_id, stop=True)
+    return 'SUCCESS', 200
 
 
 @app.route('/', methods=['GET', 'POST'])

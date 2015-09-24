@@ -4,6 +4,36 @@
         $interpolateProvider.startSymbol('{[')
         $interpolateProvider.endSymbol(']}')
     ])
+    app.directive('ngFoundNode', () ->
+        return {
+            restrict: 'E'
+            require: '^ngModel'
+            scope: {
+                ngModel: '='
+            }
+            templateUrl: 'templates/ng-found-node.html'
+
+            controller: ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
+                $scope.log('Beginning of foundNode directive controller')
+
+                $scope.testFoundNode = (nodeId) ->
+                    $log.log("Testing node #{nodeId}")
+                    action = 'start'
+                    if not $scope.testingNode
+                        action = 'stop'
+                    $scope.testingNode = not $scope.testingNode
+
+                    $http.get("/nodes/#{nodeId}/test/#{action}")
+
+                $scope.addThisNode = (nodeId) ->
+                    $log.log("Adding node #{nodeId}")
+                    if $scope.foundNodes.length == 0
+                        $scope.findingNodes = false
+
+            ]
+            link: (scope, iElement, iAttrs, ctrl) ->
+        }
+    )
     app.controller(
         'nosferatuController',
         ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
@@ -41,21 +71,6 @@
                             timeout = $timeout(poller, 2000)
                         )
                 poller()
-
-            $scope.testFoundNode = (nodeId) ->
-                nodeId = $scope.nodeId
-                $log.log("Testing node #{nodeId}")
-                action = 'start'
-                if not $scope.testingNode
-                    action = 'stop'
-                $scope.testingNode = not $scope.testingNode
-
-                $http.get("/nodes/#{nodeId}/test/#{action}")
-
-            $scope.addThisNode = (nodeId) ->
-                $log.log("Adding node #{nodeId}")
-                if $scope.foundNodes.length == 0
-                    $scope.findingNodes = false
 
             $scope.findNodes = () ->
                 $log.log('Searching for new nodes')

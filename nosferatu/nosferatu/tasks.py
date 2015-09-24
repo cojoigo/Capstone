@@ -48,7 +48,7 @@ def find_nodes_task(self):
 
 
 @celery.task
-def test_node(node_id, stop=False):
+def test_node_task(node_id, stop=False):
     if stop:
         print('Stopping test')
     else:

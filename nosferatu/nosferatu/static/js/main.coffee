@@ -4,39 +4,53 @@
         $interpolateProvider.startSymbol('{[')
         $interpolateProvider.endSymbol(']}')
     ])
+    app.directive('ngFoundNode', () ->
+        return {
+            restrict: 'E'
+            require: '^ngModel'
+            scope: {
+                ngModel: '='
+            }
+            templateUrl: 'templates/ng-found-node.html'
+
+            controller: ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
+                $scope.log('Beginning of foundNode directive controller')
+
+                $scope.testFoundNode = (nodeId) ->
+                    $log.log("Testing node #{nodeId}")
+                    action = 'start'
+                    if not $scope.testingNode
+                        action = 'stop'
+                    $scope.testingNode = not $scope.testingNode
+
+                    $http.get("/nodes/#{nodeId}/test/#{action}")
+
+                $scope.addThisNode = (nodeId) ->
+                    $log.log("Adding node #{nodeId}")
+                    if $scope.foundNodes.length == 0
+                        $scope.findingNodes = false
+
+            ]
+            link: (scope, iElement, iAttrs, ctrl) ->
+        }
+    )
     app.controller(
         'nosferatuController',
         ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
             submitButtonTexts = {false: 'Search for Node', true: 'Loading...'}
-            $scope.loading = false
-            $scope.submitButtonText = submitButtonTexts[$scope.loading]
+            $scope.findingNodes = false
+            $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
+
+            $scope.testingNode = false
+            testNodeBtnTexts = {false: 'Test', true: 'Stop'}
+            $scope.testNodeBtnText = testNodeBtnTexts[$scope.testingNode]
+
+            $scope.addingNode = false
+
             $scope.nodes = []
+            $scope.foundNodes = []
 
-            $http.get('/registered_nodes')
-                .success((results) ->
-                    $log.log('registered nodes', results)
-                    Array::push.apply($scope.nodes, results.items)
-                    console.log('nodes!', $scope.nodes)
-                )
-                .error((error) ->
-                    $log.log('Initial node list:', error)
-                )
-
-            $scope.searchForNode = () ->
-                $log.log('Testing')
-
-                $http.post('/register_node')
-                    .success((results) ->
-                        $log.log(results)
-                        $scope.findNewNodes(results)
-                        $scope.loading = true
-                        $scope.submitButtonText = submitButtonTexts[$scope.loading]
-                    )
-                    .error((error) ->
-                        $log.log(error)
-                    )
-
-            $scope.findNewNodes = (jobId) ->
+            $scope.loadExistingNodes = (jobId) ->
                 timeout = ''
                 poller = () ->
                     $log.log('/registered_nodes/' + jobId)
@@ -57,5 +71,44 @@
                             timeout = $timeout(poller, 2000)
                         )
                 poller()
-        ])
+
+            $scope.findNodes = () ->
+                $log.log('Searching for new nodes')
+
+                $http.post('/find_nodes')
+                    .success((results) ->
+                        $log.log("  ", results)
+                        $scope.findNodesPoll(results)
+                        $scope.findingNodes = true
+                        $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
+                    )
+                    .error((error) ->
+                        $log.log(error)
+                    )
+
+            $scope.findNodesPoll = (jobId) ->
+                timeout = ''
+                poller = () ->
+                    $log.log('/find_nodes/' + jobId)
+                    $http.get('/find_nodes/' + jobId)
+                        .success((data, status, headers, config) ->
+                            if status == 202
+                                $log.log("  failed:", data, status)
+                            else if status == 200
+                                $log.log("  success: ", data)
+                                Array::push.apply($scope.foundNodes, data.items)
+                                console.log('    data', $scope.foundNodes)
+
+                                if $scope.foundNodes.length == 0
+                                    $scope.findingNodes = false
+                                $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
+                                $timeout.cancel(timeout)
+                                return false
+
+                            # Continue to call the poller every 2 seconds until its canceled
+                            timeout = $timeout(poller, 2000)
+                        )
+                poller()
+        ]
+    )
 )()

@@ -24,6 +24,7 @@ To set up all of the prerequisites for running **Nosferatu**, run the following 
     rm initial_configuration -f
     cd Capstone/nosferatu/
     mkdir instance
+    cd instance
     bash -c 'cat << "EOF" > config.py
     SECRET_KEY = 'this-really-needs-to-be-changed'
     SQLALCHEMY_DATABASE_URI = 'postgresql:///nosferatu'

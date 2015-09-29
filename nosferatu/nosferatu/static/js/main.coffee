@@ -6,30 +6,30 @@
     ])
     app.directive('foundNodeset', () ->
         template = '''
-          <div role="tabpanel" ng-transclude>
-            <ul class="nav nag-tabs" role="tablist">
+          <div role="tabpanel">
+            <ul class="nav nav-tabs" role="tablist">
               <li role="presentation"
-                  ng-repeat="tab in nodeset.nodes">
-                  ng-class="{'active': tab.active}"
+                  ng-repeat="node in nodeset.nodes">
+                  ng-class="{'active': node.active}"
                 <a href=""
                    role="tab"
-                   ng-click="nodeset.select(tab)">
-                    {[tab.heading]}
+                   ng-click="nodeset.select(node)">
+                    {[node.heading]}
                 </a>
               </li>
             </ul>
-            <ng-transclude></ng-transclude>
+            <div ng-repeat="node in nodeset.nodes" ng-transclude></div>
           </div>
         '''
         controller = ['$scope', '$log', '$http', ($scope, $log, $http) ->
             $log.log('Beginning of foundNode directive controller')
             console.log('nodeset scope', this)
 
-            nodes = this.nodes = []
+            this.nodes = []
             console.log('nodes', this.nodes)
-            testingNode = this.testingNode = false
-            testNodeBtnTexts = {false: 'Test', true: 'Stop'}
-            testNodebtnText = this.testNodeBtnText = testNodeBtnTexts[$scope.testingNode]
+            this.testingNode = false
+            this.testNodeBtnTexts = {false: 'Test', true: 'Stop'}
+            this.testNodeBtnText = this.testNodeBtnTexts[$scope.testingNode]
 
             this.testFoundNode = () ->
                 nodeId = this.$id
@@ -42,12 +42,13 @@
                 $http.get("/nodes/#{nodeId}/test/#{action}")
 
             this.addNode = (node) ->
-                $log.log("Adding node #{node}")
+                this.log("Adding node #{node}")
                 this.nodes.push(node)
                 if this.tabs.length == 1
                     node.active = true
 
             this.select = (selected) ->
+                $log.log("selecting this node! #{selected}")
                 angular.forEach(this.nodes, (node) ->
                     if node.active and node isnt selected
                         node.active = false
@@ -56,9 +57,10 @@
         ]
         return {
             bindToController: {
+                # addNode: '&'
                 heading: '@'
+                nodes: '=nodes'
                 select: '&'
-                addNode: '&'
             }
             controller: controller
             controllerAs: 'nodeset'
@@ -71,14 +73,15 @@
     app.directive('foundNode', () ->
         template = '
           <div role="tabpanel" ng-show="active" ng-transclude>
-          </tab>
+          </div>
         '
 
         link = (scope, element, attrs, ctrl) ->
             console.log('add', ctrl.addNode)
+            console.log('select', ctrl.select)
             scope.active = false
-            debugger
             ctrl.addNode(scope)
+            ctrl.select(scope)
 
         return {
             link: link
@@ -131,7 +134,7 @@
 
                 $http.post('/find_nodes')
                     .success((results) ->
-                        $log.log("  ", results)
+                        $log.log("  find-nodes", results)
                         $scope.findNodesPoll(results)
                         $scope.findingNodes = true
                         $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]

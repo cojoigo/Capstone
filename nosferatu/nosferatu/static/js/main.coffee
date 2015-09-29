@@ -4,82 +4,101 @@
         $interpolateProvider.startSymbol('{[')
         $interpolateProvider.endSymbol(']}')
     ])
-    app.directive('ngFoundNode', () ->
-        template = '
-            <form role="form" ng-submit="addThisNode(nodeId)">
-              <input type="text" name="nodeId" ng-model="nodeId" value="{[node.id]}" />
-              <div class="row">
-                <div class="small-4 columns">
-                  <input type="text" placeholder="Node Name" />
-                </div>
-                <div class="small-4 columns">
-                  <label>Node IP:
-                    <label>{[node.ip]}</label>
-                  </label>
-                </div>
-                <div class="small-4 columns">
-                  <label>Node MAC:
-                    <label>{[node.mac]}</label>
-                  </label>
-                </div>
-              </div>
-              <div class="row">
-                <div class="small-4 columns"></div>
-                <div class="small-4 columns">
-                  <button type="button" ng-click="testFoundNode(nodeId)">{[testNodeBtnText]}</button>
-                </div>
-                <div class="small-4 columns">
-                  <button type="submit" class="btn btn-default" ng-disabled="addingNode">Save</button>
-                </div>
-              </div>
-            </form>
-        '
-
+    app.directive('foundNodeset', () ->
+        template = '''
+          <div role="tabpanel" ng-transclude>
+            <ul class="nav nag-tabs" role="tablist">
+              <li role="presentation"
+                  ng-repeat="tab in nodeset.nodes">
+                  ng-class="{'active': tab.active}"
+                <a href=""
+                   role="tab"
+                   ng-click="nodeset.select(tab)">
+                    {[tab.heading]}
+                </a>
+              </li>
+            </ul>
+            <ng-transclude></ng-transclude>
+          </div>
+        '''
         controller = ['$scope', '$log', '$http', ($scope, $log, $http) ->
             $log.log('Beginning of foundNode directive controller')
+            console.log('nodeset scope', this)
 
-            $scope.testFoundNode = (nodeId) ->
+            nodes = this.nodes = []
+            console.log('nodes', this.nodes)
+            testingNode = this.testingNode = false
+            testNodeBtnTexts = {false: 'Test', true: 'Stop'}
+            testNodebtnText = this.testNodeBtnText = testNodeBtnTexts[$scope.testingNode]
+
+            this.testFoundNode = () ->
+                nodeId = this.$id
                 $log.log("Testing node #{nodeId}")
                 action = 'start'
-                if not $scope.testingNode
+                if not this.testingNode
                     action = 'stop'
-                $scope.testingNode = not $scope.testingNode
+                this.testingNode = not this.testingNode
 
                 $http.get("/nodes/#{nodeId}/test/#{action}")
 
-            $scope.addThisNode = (nodeId) ->
-                $log.log("Adding node #{nodeId}")
-                if $scope.foundNodes.length == 0
-                    $scope.findingNodes = false
-        ]
+            this.addNode = (node) ->
+                $log.log("Adding node #{node}")
+                this.nodes.push(node)
+                if this.tabs.length == 1
+                    node.active = true
 
-        link = (scope, elem, attrs, ctrl) ->
-            return
+            this.select = (selected) ->
+                angular.forEach(this.nodes, (node) ->
+                    if node.active and node isnt selected
+                        node.active = false
+                )
+                selected.active = true
+        ]
+        return {
+            bindToController: {
+                heading: '@'
+                select: '&'
+                addNode: '&'
+            }
+            controller: controller
+            controllerAs: 'nodeset'
+            restrict: 'E'
+            scope: {}
+            template: template
+            transclude: true
+        }
+    )
+    app.directive('foundNode', () ->
+        template = '
+          <div role="tabpanel" ng-show="active" ng-transclude>
+          </tab>
+        '
+
+        link = (scope, element, attrs, ctrl) ->
+            console.log('add', ctrl.addNode)
+            scope.active = false
+            debugger
+            ctrl.addNode(scope)
 
         return {
-            bindToController: true,
-            controller: controller
-            controllerAs: 'vm'
+            link: link
             restrict: 'E'
-            require: '^ngModel'
+            require: '^foundNodeset'
             scope: {
-                ngModel: '='
+                heading: '@'
             }
             template: template
-            # link: link
+            transclude: true
         }
-    ])
+    )
+
     app.controller(
         'nosferatuController',
         ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
+            console.log('beginning of main controller')
             submitButtonTexts = {false: 'Search for Node', true: 'Loading...'}
             $scope.findingNodes = false
             $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
-
-            $scope.testingNode = false
-            testNodeBtnTexts = {false: 'Test', true: 'Stop'}
-            $scope.testNodeBtnText = testNodeBtnTexts[$scope.testingNode]
-
             $scope.addingNode = false
 
             $scope.nodes = []

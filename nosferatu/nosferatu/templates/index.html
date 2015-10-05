@@ -8,10 +8,11 @@
         <img class="col-sm-3 col-sm-offset-4" src="/static/img/spinner.gif" ng-show="loading">
       </form>
 
-      <hr />
-
-      <found-nodeset nodes="foundNodes">
-        <found-node heading="asdfsdf{[node.ip]}">
+      <tabset vertical="true">
+        <tab ng-repeat="node in foundNodes"
+             heading="{[node.ip]}"
+        >
+          <found-node node="node">
             <form role="form" ng-submit="addThisNode(nodeId)">
               <input type="text" name="nodeId" ng-model="nodeId" value="{[node.id]}" />
               <div class="row">
@@ -32,15 +33,20 @@
               <div class="row">
                 <div class="small-4 columns"></div>
                 <div class="small-4 columns">
-                  <button type="button" ng-click="testFoundNode(nodeId)">{[testNodeBtnText]}</button>
+                  <button type="button" ng-click="node.testFoundNode()">
+                    {[node.testBtnText]}
+                  </button>
                 </div>
                 <div class="small-4 columns">
-                  <button type="submit" class="btn btn-default" ng-disabled="addingNode">Save</button>
+                  <button type="submit" class="btn btn-default" ng-disabled="addingNode">
+                    Save
+                  </button>
                 </div>
               </div>
             </form>
-        </found-node>
-      </found-nodeset>
+          </found-node>
+        </tab>
+      </tabset>
     </div>
 
     <hr />

@@ -28,9 +28,43 @@ def find_nodes_task(self):
 
 
 @celery.task(bind=True)
-def add_node_task(self):
+def get_node_task(self):
+    node = {
+        'id': 12341238,
+        'ip': '1.2.3.4',
+        'mac': 'A0:2B:03:C3:F7',
+        'on': True,
+    }
+    return node
+
+
+@celery.task(bind=True)
+def get_nodes_task(self):
+    nodes = [
+        {
+            'id': 12341239,
+            'ip': '1.2.3.4',
+            'mac': 'A0:2B:03:C3:F9',
+            'on': True,
+        }, {
+            'id': 12341241,
+            'ip': '2.2.3.4',
+            'mac': 'A0:2B:03:C3:F5',
+            'on': False,
+        }, {
+            'id': 12341242,
+            'ip': '3.2.3.4',
+            'mac': 'A0:2B:03:C3:F4',
+            'on': True,
+        }
+    ]
+    return nodes
+
+
+@celery.task(bind=True)
+def add_node_task(self, req):
+    return 123412345
     try:
-        return "QWER"
         node = Node(
             name="Test",
             ip_addr='1.1.1.1',
@@ -43,8 +77,6 @@ def add_node_task(self):
         return node.id
     except Exception as e:
         log.exception(e)
-        return "ASDF"
-        pass
 
 
 @celery.task

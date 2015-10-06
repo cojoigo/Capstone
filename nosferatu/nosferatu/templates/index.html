@@ -12,7 +12,7 @@
         <tab ng-repeat="node in foundNodes"
              heading="{[node.ip]}"
         >
-          <found-node node="node" addedOutput="addedNodes">
+          <found-node node="node" addedNodes="addedNodes">
             <form role="form" ng-submit="node.add()">
               <div class="row">
                 <div class="small-4 columns">

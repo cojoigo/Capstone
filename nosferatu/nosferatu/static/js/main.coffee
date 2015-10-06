@@ -7,11 +7,11 @@
     app.directive('foundNode', () ->
         template = '<div ng-transclude></div>'
 
-        controller = ['$scope', '$log', '$http', ($scope, $log, $http) ->
+        controller = ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
             $log.log('Beginning of foundNode directive controller')
 
             self = this
-            self.node.testBtnText = 'Test'
+            @node.testBtnText = 'Test'
 
             @updateTestText = (t) ->
                 t.testBtnText = self.testBtnTexts[self.testing]
@@ -20,6 +20,10 @@
             @testBtnTexts = {false: 'Test', true: 'Stop'}
             console.log('asdf', @node.testBtnText)
             @updateTestText(@node)
+
+            @adding = false
+            @addingBtnTexts = {false: 'Save', true: '...'}
+            @addingBtnText = @addingBtnTexts[@adding]
 
             @node.test = () ->
                 $log.log("Testing node #{this.id}")
@@ -35,31 +39,38 @@
             @node.add = () ->
                 $log.log("Adding node #{this.id}")
 
-                $http.post("/nodes/#{this.id}")
-                    .success((results) ->
+                sendInfo = {
+                    'id': this.id
+                    'ip': this.ip
+                    'mac': this.mac
+                    'name': this.name
+                }
+                $http.post('/nodes/add/', sendInfo).then(
+                    ((results) ->
                         $log.log("  find-nodes", results)
-                        $scope.addPoll(results)
-                        $scope.adding= true
-                        $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
-                    )
-                    .error((error) ->
+                        self.addPoll(results)
+                        self.adding= true
+                        self.addingBtnText = self.addingBtnTexts[self.adding]
+                    ),
+                    ((error) ->
                         $log.log(error)
                     )
+                )
 
             @addPoll = (jobId) ->
                 timeout = ''
                 poller = () ->
-                    $log.log('/nodes/adding/' + jobId)
-                    $http.get('/nodes/adding/' + jobId)
+                    $log.log('/nodes/add/' + jobId)
+                    $http.get('/nodes/add/' + jobId)
                         .success((data, status, headers, config) ->
                             if status == 202
                                 $log.log("  failed:", data, status)
                                 self.added = false
-                                $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
+                                self.addingBtnText = self.addingBtnTexts[self.adding]
                             else if status == 200
-                                $log.log("  success: ", data)
-                                Array::push.apply(self.addedOuput, data)
-                                console.log('    data', self.addedOuput)
+                                $log.log("  success: ", $scope.$parent.addedNodes, data)
+                                $scope.$parent.addedNodes.push(data)
+                                console.log('    data', $scope.$parent.addedNodes)
 
                                 $timeout.cancel(timeout)
                                 return false
@@ -75,7 +86,7 @@
             bindToController: {
                 add: '&'
                 node: '=node'
-                addedOutput: '='
+                addedNodes: '='
                 testBtnText: '='
             }
             controller: controller
@@ -94,25 +105,58 @@
             submitButtonTexts = {false: 'Search for Node', true: 'Loading...'}
             $scope.findingNodes = false
             $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
-            $scope.addingNode = false
+
+            $scope.addedNodes = []
 
             $scope.nodes = []
             $scope.foundNodes = []
 
-            $scope.loadExistingNodes = (jobId) ->
+            $scope.$watchCollection(
+                'addedNodes',
+                ((newValue, oldValue) ->
+                    $log.log("new and old: #{newValue}")
+                    $log.log("new and old: #{oldValue}")
+                    newDiff = []
+                    for obj in newValue
+                        if obj not in oldValue
+                            newDiff.push(obj.id)
+                    for id in newDiff
+                        $log.log("Get node: #{id}")
+                        $http.get("/nodes/#{id}")
+                            .success((results) ->
+                                $log.log("  - job: ", results)
+                                $scope.getNodePoll(results)
+                            )
+                            .error((error) ->
+                                $log.log(error)
+                            )
+                )
+            )
+
+            $scope.getNodePoll = (jobId) ->
                 timeout = ''
                 poller = () ->
-                    $log.log('/registered_nodes/' + jobId)
-                    $http.get('/registered_nodes/' + jobId)
+                    $log.log('/nodes/get/' + jobId)
+                    $http.get('/nodes/get/' + jobId)
                         .success((data, status, headers, config) ->
                             if status == 202
-                                $log.log(data, status)
+                                $log.log("   failed:", data, status)
                             else if status == 200
-                                $log.log(data)
-                                $scope.loading = false
-                                $scope.submitButtonText = submitButtonTexts[$scope.loading]
+                                $log.log("  success: ", data)
                                 $scope.nodes.push(data)
-                                console.log('data', data, $scope.nodes)
+
+                                # Its added now, so doesnt need to be found
+                                for item in $scope.foundNodes
+                                    if item.id == data.id
+                                        console.log('asdf;lkj', item.id, data.id, item, data)
+                                        $scope.foundNodes.pop(item)
+                                console.log('  - data', $scope.nodes)
+
+                                # Reset the button to search for more nodes now
+                                if $scope.foundNodes.length == 0
+                                    $scope.findingNodes = false
+                                $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
+
                                 $timeout.cancel(timeout)
                                 return false
 
@@ -124,9 +168,9 @@
             $scope.findNodes = () ->
                 $log.log('Searching for new nodes')
 
-                $http.post('/nodes/find')
+                $http.get('/nodes/find')
                     .success((results) ->
-                        $log.log("  find-nodes", results)
+                        $log.log('  - ', results)
                         $scope.findNodesPoll(results)
                         $scope.findingNodes = true
                         $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
@@ -144,7 +188,7 @@
                             if status == 202
                                 $log.log("  failed:", data, status)
                             else if status == 200
-                                $log.log("  success: ", data)
+                                $log.log("  success: ", data.items)
                                 Array::push.apply($scope.foundNodes, data.items)
                                 console.log('    data', $scope.foundNodes)
 

@@ -21,7 +21,7 @@
             console.log('asdf', @node.testBtnText)
             @updateTestText(@node)
 
-            @node.testFoundNode = () ->
+            @node.test = () ->
                 $log.log("Testing node #{this.id}")
                 action = 'start'
                 if not self.testing
@@ -31,15 +31,52 @@
                 self.updateTestText(this)
 
                 $http.get("/nodes/#{this.id}/test/#{action}")
+
+            @node.add = () ->
+                $log.log("Adding node #{this.id}")
+
+                $http.post("/nodes/#{this.id}")
+                    .success((results) ->
+                        $log.log("  find-nodes", results)
+                        $scope.addPoll(results)
+                        $scope.adding= true
+                        $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
+                    )
+                    .error((error) ->
+                        $log.log(error)
+                    )
+
+            @addPoll = (jobId) ->
+                timeout = ''
+                poller = () ->
+                    $log.log('/nodes/adding/' + jobId)
+                    $http.get('/nodes/adding/' + jobId)
+                        .success((data, status, headers, config) ->
+                            if status == 202
+                                $log.log("  failed:", data, status)
+                                self.added = false
+                                $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
+                            else if status == 200
+                                $log.log("  success: ", data)
+                                Array::push.apply(self.addedOuput, data)
+                                console.log('    data', self.addedOuput)
+
+                                $timeout.cancel(timeout)
+                                return false
+
+                            # Continue to call the poller every 2 seconds until its canceled
+                            timeout = $timeout(poller, 2000)
+                        )
+                poller()
+                $log.log("Adding node #{this.id}")
         ]
 
         return {
             bindToController: {
-                addNode: '&'
-                heading: '@'
+                add: '&'
                 node: '=node'
-                select: '&'
-                testNodeBtnText: '='
+                addedOutput: '='
+                testBtnText: '='
             }
             controller: controller
             controllerAs: 'foundnode'
@@ -87,7 +124,7 @@
             $scope.findNodes = () ->
                 $log.log('Searching for new nodes')
 
-                $http.post('/find_nodes')
+                $http.post('/nodes/find')
                     .success((results) ->
                         $log.log("  find-nodes", results)
                         $scope.findNodesPoll(results)
@@ -101,8 +138,8 @@
             $scope.findNodesPoll = (jobId) ->
                 timeout = ''
                 poller = () ->
-                    $log.log('/find_nodes/' + jobId)
-                    $http.get('/find_nodes/' + jobId)
+                    $log.log('/nodes/find/' + jobId)
+                    $http.get('/nodes/find/' + jobId)
                         .success((data, status, headers, config) ->
                             if status == 202
                                 $log.log("  failed:", data, status)

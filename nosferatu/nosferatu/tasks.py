@@ -5,26 +5,6 @@ from .models import Node
 
 
 @celery.task(bind=True)
-def register_nodesdfa(self):
-    try:
-        return "QWER"
-        node = Node(
-            name="Test",
-            ip_addr='1.1.1.1',
-            mac_addr='40:6c:8f:40:98:4d',
-            user_id=3,
-        )
-        db.session.add(node)
-        db.session.commit()
-        print(node.id)
-        return node.id
-    except Exception as e:
-        log.exception(e)
-        return "ASDF"
-        pass
-
-
-@celery.task(bind=True)
 def find_nodes_task(self):
     nodes = [
         {
@@ -45,6 +25,26 @@ def find_nodes_task(self):
         }
     ]
     return nodes
+
+
+@celery.task(bind=True)
+def add_node_task(self):
+    try:
+        return "QWER"
+        node = Node(
+            name="Test",
+            ip_addr='1.1.1.1',
+            mac_addr='40:6c:8f:40:98:4d',
+            user_id=3,
+        )
+        db.session.add(node)
+        db.session.commit()
+        print(node.id)
+        return node.id
+    except Exception as e:
+        log.exception(e)
+        return "ASDF"
+        pass
 
 
 @celery.task

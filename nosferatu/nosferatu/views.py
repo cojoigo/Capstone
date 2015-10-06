@@ -21,12 +21,6 @@ def after_invitation_hook(sender, **kwargs):
     log.info('USER SENT INVITATION')
 
 
-@app.route('/nodes/<node_id>', methods=['GET'])
-@cache.memoize(timeout=5)
-@login_required
-def get_node_status(node_id):
-    pass
-
 @app.route('/registered_nodes', methods=['GET'])
 @login_required
 def registered_nodes():
@@ -76,15 +70,7 @@ def get_new_node(job_id):
         return 'ERROR', 202
 
 
-@app.route('/register_node', methods=['POST'])
-@login_required
-def register_node():
-    job = search_for_node.delay()
-    log.debug(job.id)
-    return job.id
-
-
-@app.route('/find_nodes/<job_id>', methods=['GET'])
+@app.route('/nodes/find/<job_id>', methods=['GET'])
 @login_required
 def find_nodes(job_id):
     log.debug(job_id)
@@ -95,12 +81,38 @@ def find_nodes(job_id):
         return 'ERROR', 202
 
 
-@app.route('/find_nodes', methods=['POST'])
+@app.route('/nodes/find', methods=['POST'])
 @login_required
 def search_for_nodes():
     job = find_nodes_task.delay()
     log.debug(job.id)
     return job.id
+
+
+@app.route('/nodes/jobs/<job_id>', methods=['GET'])
+@login_required
+def add_node_result(job_id):
+    log.debug(job_id)
+    job = add_node_task.AsyncResult(job_id)
+    if job.ready():
+        return jsonify(items=job.result)
+    else:
+        return 'ERROR', 202
+
+
+@app.route('/nodes/<node_id>', methods=['POST'])
+@login_required
+def add_node(node_id):
+    print(node_id, self.request)
+    job = add_node_task.delay(node_id, node)
+    return job.id
+
+
+@app.route('/nodes/<node_id>', methods=['GET'])
+@cache.memoize(timeout=5)
+@login_required
+def get_node(node_id):
+    pass
 
 
 @app.route('/nodes/<node_id>/test/start', methods=['GET'])

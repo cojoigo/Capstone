@@ -5,9 +5,54 @@ from .models import Node
 
 
 @celery.task(bind=True)
-def register_nodesdfa(self):
+def find_nodes_task(self):
+    nodes = {
+        'A0:2B:03:C3:F3': {
+            'id': 12341234,
+            'ip': '1.2.3.4',
+            'mac': 'A0:2B:03:C3:F3',
+            'on': True,
+        },
+        'A0:2B:03:C3:F5': {
+            'id': 12341235,
+            'ip': '2.2.3.4',
+            'mac': 'A0:2B:03:C3:F5',
+            'on': False,
+        },
+        'A0:2B:03:C3:F4': {
+            'id': 12341236,
+            'ip': '3.2.3.4',
+            'mac': 'A0:2B:03:C3:F4',
+            'on': True,
+        },
+    }
+    return nodes
+
+
+@celery.task(bind=True)
+def get_node_task(self, node_id):
+    node = {
+        'id': 12341238,
+        'ip': '1.2.3.4',
+        'mac': 'A0:2B:03:C3:F3',
+        'name': 'Living room',
+        'on': True,
+    }
+    return node
+
+
+@celery.task(bind=True)
+def get_nodes_task(self):
+    nodes = {
+        'id1': 12341238,
+    }
+    return nodes
+
+
+@celery.task(bind=True)
+def add_node_task(self, req):
+    return {'id': 12341234}
     try:
-        return "QWER"
         node = Node(
             name="Test",
             ip_addr='1.1.1.1',
@@ -20,31 +65,6 @@ def register_nodesdfa(self):
         return node.id
     except Exception as e:
         log.exception(e)
-        return "ASDF"
-        pass
-
-
-@celery.task(bind=True)
-def find_nodes_task(self):
-    nodes = [
-        {
-            'id': 12341234,
-            'ip': '1.2.3.4',
-            'mac': 'A0:2B:03:C3:F3',
-            'on': True,
-        }, {
-            'id': 12341235,
-            'ip': '2.2.3.4',
-            'mac': 'A0:2B:03:C3:F5',
-            'on': False,
-        }, {
-            'id': 12341236,
-            'ip': '3.2.3.4',
-            'mac': 'A0:2B:03:C3:F4',
-            'on': True,
-        }
-    ]
-    return nodes
 
 
 @celery.task

@@ -26,6 +26,9 @@ app = Flask(__name__, instance_relative_config=True)
 app.config.from_object('config')
 app.config.from_pyfile('config.py')
 app.wsgi_app = ProxyFix(app.wsgi_app)
+if app.debug:
+    from werkzeug.debug import DebuggedApplication
+    app.wsgi_app = DebuggedApplication(app.wsgi_app, True)
 
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 celery = make_celery(app)

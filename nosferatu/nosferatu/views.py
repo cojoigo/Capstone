@@ -1,6 +1,6 @@
 import logging
 
-from flask import render_template, jsonify
+from flask import render_template, jsonify, request
 from flask_user import login_required
 from flask_user.signals import user_sent_invitation, user_registered
 
@@ -21,86 +21,108 @@ def after_invitation_hook(sender, **kwargs):
     log.info('USER SENT INVITATION')
 
 
-@app.route('/nodes/<node_id>', methods=['GET'])
-@cache.memoize(timeout=5)
+@app.route('/', methods=['GET', 'POST'])
 @login_required
-def get_node_status(node_id):
-    pass
+def index():
+    return render_template('index.html')
 
-@app.route('/registered_nodes', methods=['GET'])
+
+@app.route('/nodes/get/', methods=['GET'])
 @login_required
-def registered_nodes():
-    nodes = [
-        {
-            'id': 12341234,
-            'ip': '1.2.3.4',
-            'mac': 'A0:2B:03:C3:F3',
-            'on': True,
-        }, {
-            'id': 12341235,
-            'ip': '2.2.3.4',
-            'mac': 'A0:2B:03:C3:F5',
-            'on': False,
-        }, {
-            'id': 12341236,
-            'ip': '3.2.3.4',
-            'mac': 'A0:2B:03:C3:F4',
-            'on': True,
-        }
-    ]
-    return jsonify(items=nodes)
-
-
-@app.route('/registered_nodes/<job_id>', methods=['GET'])
-@login_required
-def get_new_node(job_id):
-    log.debug(job_id)
-    job = search_for_node.AsyncResult(job_id)
-    if job.ready():
-        # node = Node.query.filter_by(id=job.result).first()
-        # nodes = {
-        #     'id': node.id,
-        #     'ip': node.ip_addr,
-        #     'mac': node.mac_addr,
-        #     'userid': node.user_id,
-        # }
-        nodes = {
-            'id': 12341234,
-            'ip': '1.2.3.4',
-            'mac': ':#:$:$:#:',
-            'userid': 363456,
-            'on': True,
-        }
-        return jsonify(nodes)
-    else:
-        return 'ERROR', 202
-
-
-@app.route('/register_node', methods=['POST'])
-@login_required
-def register_node():
-    job = search_for_node.delay()
-    log.debug(job.id)
+def get_nodes():
+    job = get_nodes_task.delay()
     return job.id
 
 
-@app.route('/find_nodes/<job_id>', methods=['GET'])
+@app.route('/nodes/get/<job_id>', methods=['GET'])
 @login_required
-def find_nodes(job_id):
-    log.debug(job_id)
-    job = find_nodes_task.AsyncResult(job_id)
+def nodes_jobs(job_id):
+    print('get all the nodes', job_id)
+
+    job = get_nodes_task.AsyncResult(job_id)
     if job.ready():
-        return jsonify(items=job.result)
+        print('  - all the gotten nodes', job_id, job.result)
+        return jsonify(job.result)
+    else:
+        return 'Job is not ready', 202
+
+
+@app.route('/nodes/add/', methods=['POST'])
+@login_required
+def add_node():
+    print('Beginning add node', request.json)
+    node = request.json
+    job = add_node_task.delay(node)
+    print(' - adding job', job.id)
+    return job.id
+
+
+@app.route('/nodes/add/<job_id>', methods=['GET'])
+@login_required
+def node_adding_jobs(job_id):
+    print('adding single node', job_id)
+
+    job = add_node_task.AsyncResult(job_id)
+    job.state
+    if job.ready():
+        print('  - added node', job_id, job.result['id'])
+        return jsonify(id=job.result['id'])
     else:
         return 'ERROR', 202
 
 
-@app.route('/find_nodes', methods=['POST'])
+@app.route('/nodes/find/', methods=['GET'])
 @login_required
 def search_for_nodes():
     job = find_nodes_task.delay()
-    log.debug(job.id)
+
+    print('find', job.id)
     return job.id
+
+
+@app.route('/nodes/find/<job_id>', methods=['GET'])
+@login_required
+def find_nodes(job_id):
+    print(job_id)
+
+    job = find_nodes_task.AsyncResult(job_id)
+    if job.ready():
+        print('  find result', job.result)
+        return jsonify(job.result)
+    else:
+        return 'ERROR', 202
+
+
+# node = Node.query.filter_by(id=job.result).first()
+# nodes = {
+#     'id': node.id,
+#     'ip': node.ip_addr,
+#     'mac': node.mac_addr,
+#     'userid': node.user_id,
+# }
+
+
+@app.route('/nodes/<node_id>', methods=['GET'])
+@login_required
+def get_node(node_id):
+    print('Getting the node', node_id)
+    job = get_node_task.delay(node_id)
+    print(' - job id', job.id)
+    return job.id
+
+
+@app.route('/nodes/<node_id>/jobs/<job_id>', methods=['GET'])
+@login_required
+def node_jobs(node_id, job_id):
+    print(' - Get Node Task', node_id, job_id)
+
+    job = get_node_task.AsyncResult(job_id)
+    print('   - job state', job.state)
+    if job.ready():
+        print('    - this singluar gotten node', job_id, job.result)
+        return jsonify(job.result)
+    else:
+        return 'Job is not ready', 202
 
 
 @app.route('/nodes/<node_id>/test/start', methods=['GET'])
@@ -115,9 +137,3 @@ def test_start(node_id):
 def test_stop(node_id):
     job = test_node_task.delay(node_id, stop=True)
     return 'SUCCESS', 200
-
-
-@app.route('/', methods=['GET', 'POST'])
-@login_required
-def index():
-    return render_template('index.html')

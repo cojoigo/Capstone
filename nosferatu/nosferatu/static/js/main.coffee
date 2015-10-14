@@ -121,7 +121,7 @@
 
     app.directive('ruleSelector', () ->
         template = '''
-            <form role="form" ng-submit="something">
+            <form role="form" ng-submit="addRule()">
               <h1>Add a rule</h1>
               <div class="row">
                 <div class="small-4 columns">
@@ -130,13 +130,43 @@
                 </div>
                 <div class="small-4 columns">
                   <label>Rule Type</label>
-                  <select ng-options="type for type in node.ruleTypes"
-                          ng-model="ruleType"
-                          ng-change="updateRuleTypes()"
-                  / >
+                  <select ng-options="type for type in rselect.ruleTypes"
+                          ng-model="rselect.ruleType"
+                          ng-change="rselect.updateRuleTypes()"
+                  ></select>
                 </div>
                 <div class="small-4 columns">
                   <button type="submit" class="btn btn-default">Add</button>
+                </div>
+              </div>
+              <div class="row" ng-show="rselect.ruleType === 'Schedule'">
+                <div class="small-4 columns">
+                  <div ng-repeat="day in rselect.daysOfWeek">
+                    <input id="dayOfWeek{[day]}" type="checkbox">
+                      <label for="dayOfWeek{[day]}">
+                        {[day]}
+                      </label>
+                    </input>
+                    <br />
+                  </div>
+                </div>
+                <div class="small-4 columns">
+                  <label>Hour</label>
+                  <select ng-options="day for day in rselect.hoursInDay"
+                          ng-model="rselect.hourInDay"
+                  ></select>
+                  <br />
+
+                  <label>Minute</label>
+                  <select ng-options="minute for minute in rselect.minutesInDay"
+                          ng-model="rselect.minuteInDay"
+                  ></select>
+                  <br />
+
+                  <label>Turn On/Off</label>
+                  <input id="ruleAddTurnOn" type="checkbox"></input>
+                </div>
+                <div class="small-4 columns">
                 </div>
               </div>
             </form>
@@ -145,17 +175,38 @@
         controller = ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
             $log.log('Beginning of ruleSelector directive controller')
 
-            @node.ruleTypes = ['Schedule', 'Time of Day', 'Event']
+            self = this
 
-            @node.updateRuleTypes = () ->
-                $log.log('Updating rule types!')
+            @ruleTypes = ['Schedule', 'Time of Day', 'Event']
+            @ruleType = @ruleTypes[0]
+
+            @daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+            @hoursInDay = (i for i in [1..24])
+            @hourInDay = @hoursInDay[0]
+
+            @minutesInDay = [0, 15, 30, 45]
+            @minuteInDay = @minutesInDay[0]
+
+            @updateRuleTypes = () ->
+                $log.log('Updating rule types')
+                $log.log(" - rule type is #{@ruleType}")
+            @updateRuleTypes()
+
+            @addRule = () ->
+                $log.log('Adding the rule')
+            @addRule()
         ]
         return {
             bindToController: {
-                node: '=node'
+                node: '='
+                ruleTypes: '='
+                ruleType: '='
+                updateRuleTypes: '&'
+                addRule: '&'
             }
             controller: controller
-            controllerAs: 'ruleselect'
+            controllerAs: 'rselect'
             restrict: 'E'
             scope: {}
             template: template

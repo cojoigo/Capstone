@@ -120,126 +120,6 @@
     )
 
     app.directive('ruleSelector', () ->
-        template = '''
-            <form role="form" ng-submit="rselect.addRule()">
-              <h1>Add a rule</h1>
-              <div class="row">
-                <div class="small-4 columns">
-                  <label>Rule Name</label>
-                  <input type="text" placeholder="Rule Name" ng-model="rselect.ruleName" value="" />
-                </div>
-                <div class="small-4 columns">
-                  <label>Rule Type</label>
-                  <select
-                    ng-options="type for type in rselect.ruleTypes"
-                    ng-model="rselect.ruleType"
-                    ng-change="rselect.updateRuleTypes()"
-                  ></select>
-                </div>
-                <div class="small-4 columns">
-                  <button
-                    type="submit"
-                    class="btn btn-default"
-                    ng-disabled="rselect.enableAddRuleBtn()"
-                  >Add</button>
-                </div>
-              </div>
-
-              <div class="row" ng-show="rselect.ruleType === 'Schedule'">
-                <div class="small-4 columns">
-                  <label ng-repeat="day in rselect.daysOfWeek">
-                    <input
-                      type="checkbox"
-                      name="daysOfTheWeek"
-                      value="{[day]}"
-                      ng-checked="rselect.daysOfWeekSelected.indexOf(day) > -1"
-                      ng-click="rselect.daysOfWeekToggle(day)"
-                    /> {[day]}
-                    <br />
-                  </label>
-                </div>
-                <div class="small-4 columns">
-                      <label>Select Time Type</label>
-                      <label>
-                        <input
-                          type="radio"
-                          name="scheduleTimeType"
-                          value="manual"
-                          ng-model="rselect.scheduleTimeType" />
-                        Manual
-                        <br />
-                      </label>
-
-                      <label>
-                        <input
-                          type="radio"
-                          name="scheduleTimeType"
-                          value="auto"
-                          ng-model="rselect.scheduleTimeType" />
-                        Automatic
-                        </br />
-                      </label>
-
-                      <div ng-show="rselect.scheduleTimeType === 'manual'">
-                        <label>Hour</label>
-                        <select
-                          ng-options="day for day in rselect.hoursInDay"
-                          ng-model="rselect.hourInDay"
-                        ></select>
-                        <br />
-
-                        <label>Minute</label>
-                        <select
-                          ng-options="minute for minute in rselect.minutesInDay"
-                          ng-model="rselect.minuteInDay"
-                        ></select>
-                        <br />
-                      </div>
-                      <div ng-show="rselect.scheduleTimeType === 'auto'">
-                        <label>Zip Code</label>
-                        <input type="text" ng-model="rselect.scheduleZipCode" value="" />
-
-                        <label>Select time of Day</label>
-                        <label>
-                          <input
-                            type="radio"
-                            name="scheduleTimeOfDayType"
-                            value="sunrise"
-                            ng-model="rselect.scheduleTimeOfDayType" />
-                          Sunrise
-                          <br />
-                        </label>
-
-                        <label>
-                          <input
-                            type="radio"
-                            name="scheduleTimeOfDayType"
-                            value="sunset"
-                            ng-model="rselect.scheduleTimeOfDayType" />
-                          Sunset
-                          <br />
-                        </label>
-                      </div>
-                    </div>
-
-                    <div class="small-4 columns">
-                      <label for="ruleAddTurnOn">Action: Turn {[rselect.ruleTurnOnStr]}</label>
-                      <input
-                        type="checkbox"
-                        id="ruleAddTurnOn"
-                        ng-model="rselect.ruleTurnOn"
-                        ng-change="rselect.scheduleActionChange()"/>
-                    </div>
-                  </div>
-
-                  <div class="row" ng-show="rselect.ruleType === 'Event'">
-                  </div>
-
-                  <div class="row" ng-show="rselect.ruleType === 'Motion'">
-                  </div>
-                </form>
-            '''
-
         controller = ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
             $log.log('Beginning of ruleSelector directive controller')
 
@@ -252,7 +132,16 @@
 
             @ruleTypes = ['Schedule', 'Event', 'Motion']
             @daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-            @hoursInDay = (i for i in [1..24])
+            am_pm = (i) ->
+                if i < 12
+                    return 'AM'
+                else
+                    return 'PM'
+            @hoursInDay = {}
+            for i in [0..24]
+                str = "#{((i + 11) % 12) + 1}:00 #{am_pm(i)}"
+                @hoursInDay[str] = i
+            console.log('asdf', @hoursInDay)
             @minutesInDay = [0, 15, 30, 45]
 
             @ruleType = @ruleTypes[0]
@@ -289,7 +178,7 @@
                 $log.log(" - Type: #{@ruleType}")
                 $log.log(" - Turn On: #{@ruleTurnOn}")
                 $log.log(" - Days: #{@daysOfWeekSelected}")
-                $log.log(" - Hour:minute: #{@hourInDay}:#{@minuteInDay}")
+                $log.log(" - Hour:minute: #{@hoursInDay[@hourInDay]}:#{@minuteInDay}")
                 $log.log(" - ScheduleType: #{@scheduleTimeType}")
                 $log.log(" - ZipCode: #{@scheduleZipCode}")
                 $log.log(" - TimeOfDay: #{@scheduleTimeOfDayType}")
@@ -313,7 +202,7 @@
             controllerAs: 'rselect'
             restrict: 'E'
             scope: {}
-            template: template
+            templateUrl: './static/templates/rule-selector.html'
         }
     )
 

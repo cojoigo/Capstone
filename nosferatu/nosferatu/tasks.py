@@ -2,10 +2,16 @@ import logging
 
 from . import app, cache, celery, db
 from .models import Node
-
+from find_nodes import *
+from subprocess import *
+import pprint
 
 @celery.task(bind=True)
 def find_nodes_task(self):
+
+    nodes = find_nodes()
+    
+    '''    
     nodes = {
         'A0:2B:03:C3:F3': {
             'id': 12341234,
@@ -25,9 +31,9 @@ def find_nodes_task(self):
             'mac': 'A0:2B:03:C3:F4',
             'on': True,
         },
-    }
-    return nodes
+    }'''
 
+    return nodes
 
 @celery.task(bind=True)
 def get_node_task(self, node_id):

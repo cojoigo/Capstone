@@ -73,3 +73,9 @@ def test_node_task(node_id, stop=False):
         print('Stopping test')
     else:
         print('Starting test')
+
+@celery.task
+def add_rule_task(node_id, rule):
+    return {
+        'result': True
+    }

@@ -121,14 +121,18 @@
 
     app.directive('ruleSelector', () ->
         controller = ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
-            $log.log('Beginning of ruleSelector directive controller')
+            $log.log('Beginning of ruleSelector directive controller', @node.id)
 
             self = this
 
             @enableAddRuleBtn = () ->
-                a = not (@ruleName and @days and (@scheduleZipCode if @scheduleTimeType))
-                $log.log("diabling the button? #{a}")
-                return (not @ruleName) or (not @days) or ((not @scheduleZipCode) if @scheduleTimeType)
+                result = (
+                    (not @ruleName) or
+                    (not @daysOfWeekSelected.length) or
+                    (if (@scheduleTimeType is 'auto') then (not @scheduleZipCode?) else false)
+                )
+                $log.log("diabling the button? #{result}")
+                return result
 
             @ruleTypes = ['Schedule', 'Event', 'Motion']
             @daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -141,7 +145,7 @@
             for i in [0..24]
                 str = "#{((i + 11) % 12) + 1}:00 #{am_pm(i)}"
                 @hoursInDay[str] = i
-            console.log('asdf', @hoursInDay)
+            @hoursInDayArr = Object.keys(@hoursInDay)
             @minutesInDay = [0, 15, 30, 45]
 
             @ruleType = @ruleTypes[0]
@@ -156,7 +160,7 @@
 
             @scheduleTimeType = 'manual'
             @scheduleTimeOfDayType = 'sunrise'
-            @hourInDay = @hoursInDay[0]
+            @hourInDay = @hoursInDayArr[0]
             @minuteInDay = @minutesInDay[0]
 
             @ruleTurnOn = true
@@ -167,22 +171,74 @@
                 else
                     @ruleTurnOnStr = 'Off'
 
-            @updateRuleTypes = () ->
-                $log.log('Updating rule types')
-                $log.log(" - rule type is #{@ruleType}")
-            @updateRuleTypes()
+            @addRule = (real) ->
+                if not real?
+                    return
 
-            @addRule = () ->
                 $log.log('Adding the rule')
-                $log.log(" - Name: #{@ruleName}")
-                $log.log(" - Type: #{@ruleType}")
-                $log.log(" - Turn On: #{@ruleTurnOn}")
-                $log.log(" - Days: #{@daysOfWeekSelected}")
-                $log.log(" - Hour:minute: #{@hoursInDay[@hourInDay]}:#{@minuteInDay}")
-                $log.log(" - ScheduleType: #{@scheduleTimeType}")
-                $log.log(" - ZipCode: #{@scheduleZipCode}")
-                $log.log(" - TimeOfDay: #{@scheduleTimeOfDayType}")
+                data = {
+                    'name': @ruleName
+                    'type': @ruleType
+                    'action': @ruleTurnOn
+                    'days': @daysOfWeekSelected
+                    'schedule_type': @scheduleTimeType
+
+                    # manual
+                    'hour': @hoursInDay[@hourInDay]
+                    'minute': @minuteInDay
+
+                    # auto
+                    'zip_code': @scheduleZipCode
+                    'time_of_day': @scheduleTimeOfDayType
+                }
+
+                $http.post("/nodes/#{@node.id}/rule", data).then(
+                    ((results) ->
+                        $log.log(" - job: #{results.data}")
+                        self.addRulePoll(results.data)
+                    ),
+                    ((error) ->
+                        $log.log(error)
+                    )
+                )
             @addRule()
+
+            @addRulePoll = (jobId) ->
+                if not jobId?
+                    return
+
+                timeout = ''
+                count = 0
+                poller = () ->
+                    config = {
+                        params: {
+                            'job_id': jobId
+                        }
+                    }
+                    $log.log(" - /nodes/#{self.node.id}/rule", count)
+                    $http.get("/nodes/#{self.node.id}/rule", config).then(
+                        ((results) ->
+                            if results.status == 202
+                                $log.log("  - failed:", results.data)
+                                count += 1
+                                if count is 3
+                                    $timeout.cancel(timeout)
+                                    return false
+                            else if results.status == 200
+                                $log.log("  - success: ", results.data)
+
+                                $timeout.cancel(timeout)
+                                return false
+
+                            # Continue to call the poller every 2 seconds until its canceled
+                            timeout = $timeout(poller, 2000)
+                        ),
+                        ((error) ->
+                            $log.log(error)
+                        )
+                    )
+                poller()
+            @addRulePoll()
         ]
         return {
             bindToController: {
@@ -196,7 +252,7 @@
 
                 addRule: '&'
                 scheduleTimeTypeChange: '&'
-                updateRuleTypes: '&'
+                enableAddRuleBtn: '&'
             }
             controller: controller
             controllerAs: 'rselect'

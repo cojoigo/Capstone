@@ -128,12 +128,34 @@ def node_jobs(node_id, job_id):
 @app.route('/nodes/<node_id>/test/start', methods=['GET'])
 @login_required
 def test_start(node_id):
-    job = test_node_task.delay(node_id)
+    test_node_task.delay(node_id)
     return 'SUCCESS', 200
 
 
 @app.route('/nodes/<node_id>/test/stop', methods=['GET'])
 @login_required
 def test_stop(node_id):
-    job = test_node_task.delay(node_id, stop=True)
+    test_node_task.delay(node_id, stop=True)
     return 'SUCCESS', 200
+
+
+@app.route('/nodes/<node_id>/rule', methods=['POST', 'GET'])
+@login_required
+def add_rule(node_id):
+    if request.method == 'POST':
+        print('Beginning add rule', node_id, request.json)
+        rule = request.json
+        job = add_rule_task.delay(node_id, rule)
+        return job.id
+
+    elif request.method == 'GET':
+        print('Poll add rule', node_id, request.args)
+
+        job_id = request.args['job_id']
+        job = add_rule_task.AsyncResult(job_id)
+        print('   - job state', job.state)
+        if job.ready():
+            print('    - this singluar gotten node', job_id, job.result['result'])
+            return jsonify(job.result)
+        else:
+            return 'Job is not ready', 202

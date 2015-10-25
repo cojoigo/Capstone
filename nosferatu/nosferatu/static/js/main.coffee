@@ -120,45 +120,145 @@
     )
 
     app.directive('ruleSelector', () ->
-        template = '''
-            <form role="form" ng-submit="something">
-              <h1>Add a rule</h1>
-              <div class="row">
-                <div class="small-4 columns">
-                  <label>Rule Name</label>
-                  <input type="text" placeholder="Rule Name" />
-                </div>
-                <div class="small-4 columns">
-                  <label>Rule Type</label>
-                  <select ng-options="type for type in node.ruleTypes"
-                          ng-model="ruleType"
-                          ng-change="updateRuleTypes()"
-                  / >
-                </div>
-                <div class="small-4 columns">
-                  <button type="submit" class="btn btn-default">Add</button>
-                </div>
-              </div>
-            </form>
-        '''
-
         controller = ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
-            $log.log('Beginning of ruleSelector directive controller')
+            $log.log('Beginning of ruleSelector directive controller', @node.id)
 
-            @node.ruleTypes = ['Schedule', 'Time of Day', 'Event']
+            self = this
 
-            @node.updateRuleTypes = () ->
-                $log.log('Updating rule types!')
+            @enableAddRuleBtn = () ->
+                result = (
+                    (not @ruleName) or
+                    (not @daysOfWeekSelected.length) or
+                    (if (@scheduleTimeType is 'auto') then (not @scheduleZipCode?) else false)
+                )
+                $log.log("diabling the button? #{result}")
+                return result
+
+            @ruleTypes = ['Schedule', 'Event', 'Motion']
+            @daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+            am_pm = (i) ->
+                if i < 12
+                    return 'AM'
+                else
+                    return 'PM'
+            @hoursInDay = {}
+            for i in [0..24]
+                str = "#{((i + 11) % 12) + 1}:00 #{am_pm(i)}"
+                @hoursInDay[str] = i
+            @hoursInDayArr = Object.keys(@hoursInDay)
+            @minutesInDay = [0, 15, 30, 45]
+
+            @ruleType = @ruleTypes[0]
+
+            @daysOfWeekSelected = []
+            @daysOfWeekToggle = (day) ->
+                id = @daysOfWeekSelected.indexOf(day)
+                if id > -1
+                    @daysOfWeekSelected.splice(id, 1)
+                else
+                    @daysOfWeekSelected.push(day)
+
+            @scheduleTimeType = 'manual'
+            @scheduleTimeOfDayType = 'sunrise'
+            @hourInDay = @hoursInDayArr[0]
+            @minuteInDay = @minutesInDay[0]
+
+            @ruleTurnOn = true
+            @ruleTurnOnStr = 'On'
+            @scheduleActionChange = () ->
+                if @ruleTurnOn
+                    @ruleTurnOnStr = 'On'
+                else
+                    @ruleTurnOnStr = 'Off'
+
+            @addRule = (real) ->
+                if not real?
+                    return
+
+                $log.log('Adding the rule')
+                data = {
+                    'name': @ruleName
+                    'type': @ruleType
+                    'action': @ruleTurnOn
+                    'days': @daysOfWeekSelected
+                    'schedule_type': @scheduleTimeType
+
+                    # manual
+                    'hour': @hoursInDay[@hourInDay]
+                    'minute': @minuteInDay
+
+                    # auto
+                    'zip_code': @scheduleZipCode
+                    'time_of_day': @scheduleTimeOfDayType
+                }
+
+                $http.post("/nodes/#{@node.id}/rule", data).then(
+                    ((results) ->
+                        $log.log(" - job: #{results.data}")
+                        self.addRulePoll(results.data)
+                    ),
+                    ((error) ->
+                        $log.log(error)
+                    )
+                )
+            @addRule()
+
+            @addRulePoll = (jobId) ->
+                if not jobId?
+                    return
+
+                timeout = ''
+                count = 0
+                poller = () ->
+                    config = {
+                        params: {
+                            'job_id': jobId
+                        }
+                    }
+                    $log.log(" - /nodes/#{self.node.id}/rule", count)
+                    $http.get("/nodes/#{self.node.id}/rule", config).then(
+                        ((results) ->
+                            if results.status == 202
+                                $log.log("  - failed:", results.data)
+                                count += 1
+                                if count is 3
+                                    $timeout.cancel(timeout)
+                                    return false
+                            else if results.status == 200
+                                $log.log("  - success: ", results.data)
+
+                                $timeout.cancel(timeout)
+                                return false
+
+                            # Continue to call the poller every 2 seconds until its canceled
+                            timeout = $timeout(poller, 2000)
+                        ),
+                        ((error) ->
+                            $log.log(error)
+                        )
+                    )
+                poller()
+            @addRulePoll()
         ]
         return {
             bindToController: {
-                node: '=node'
+                node: '='
+                ruleName: '='
+                ruleTypes: '='
+                ruleType: '='
+                scheduleTimeType: '='
+                scheduleZipCode: '='
+                scheduleTimeOfDayType: '='
+
+                addRule: '&'
+                scheduleTimeTypeChange: '&'
+                enableAddRuleBtn: '&'
             }
             controller: controller
-            controllerAs: 'ruleselect'
+            controllerAs: 'rselect'
             restrict: 'E'
             scope: {}
-            template: template
+            templateUrl: './static/templates/rule-selector.html'
         }
     )
 

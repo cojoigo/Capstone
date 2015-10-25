@@ -155,7 +155,7 @@ def add_rule(node_id):
         job = add_rule_task.AsyncResult(job_id)
         print('   - job state', job.state)
         if job.ready():
-            print('    - this singluar gotten node', job_id, job.result['result'])
+            print('    - this singluar gotten node', job_id, job.result['id'])
             return jsonify(job.result)
         else:
             return 'Job is not ready', 202

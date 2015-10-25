@@ -1,17 +1,18 @@
 import logging
 
-from . import app, cache, celery, db
+from . import cache, celery, db
 from .models import Node
-from find_nodes import *
-from subprocess import *
-import pprint
+from .find_nodes import find_nodes
+
+log = logging.getLogger()
+
 
 @celery.task(bind=True)
 def find_nodes_task(self):
 
     nodes = find_nodes()
-    
-    '''    
+
+    '''
     nodes = {
         'A0:2B:03:C3:F3': {
             'id': 12341234,
@@ -34,6 +35,7 @@ def find_nodes_task(self):
     }'''
 
     return nodes
+
 
 @celery.task(bind=True)
 def get_node_task(self, node_id):
@@ -80,8 +82,9 @@ def test_node_task(node_id, stop=False):
     else:
         print('Starting test')
 
+
 @celery.task
 def add_rule_task(node_id, rule):
     return {
-        'result': True
+        'id': 9999999,
     }

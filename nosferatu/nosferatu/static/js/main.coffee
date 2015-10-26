@@ -1,4 +1,34 @@
 (() ->
+    pollFunc = (func, poll, http, timeout, log) ->
+        time = ''
+        count = 0
+        poller = () ->
+            log.log("Polling #{poll}", count)
+            http.get(poll).then(
+                ((results) ->
+                    if results.status == 202
+                        log.log("  - failed:", results.data)
+                        count += 1
+                        if count is 3
+                            timeout.cancel(time)
+                            return false
+                    else if results.status == 200
+                        func(results.data)
+                        timeout.cancel(time)
+                        return false
+
+                    # Continue to call the poller every 2 seconds until its canceled
+                    time = timeout(poller, 2000)
+                ),
+                errFunc
+            )
+        poller()
+
+    errFunc = () ->
+        ((error) ->
+            $log.log(error)
+        )
+
     app = angular.module('nosferatuApp', ['mm.foundation'])
     app.config(['$interpolateProvider', ($interpolateProvider) ->
         $interpolateProvider.startSymbol('{[')
@@ -99,6 +129,8 @@
                         )
                     )
                 poller()
+
+            return
         ]
 
         return {
@@ -192,7 +224,7 @@
                     'time_of_day': @scheduleTimeOfDayType
                 }
 
-                $http.post("/nodes/#{@node.id}/rule", data).then(
+                $http.post("/nodes/#{@node.id}/rules", data).then(
                     ((results) ->
                         $log.log(" - job: #{results.data}")
                         self.addRulePoll(results.data)
@@ -215,8 +247,8 @@
                             'job_id': jobId
                         }
                     }
-                    $log.log(" - /nodes/#{self.node.id}/rule", count)
-                    $http.get("/nodes/#{self.node.id}/rule", config).then(
+                    $log.log(" - /nodes/#{self.node.id}/rules", count)
+                    $http.get("/nodes/#{self.node.id}/rules", config).then(
                         ((results) ->
                             if results.status == 202
                                 $log.log("  - failed:", results.data)
@@ -226,6 +258,8 @@
                                     return false
                             else if results.status == 200
                                 $log.log("  - success: ", results.data)
+
+                                self.addedRules.push(results.data)
 
                                 $timeout.cancel(timeout)
                                 return false
@@ -239,10 +273,14 @@
                     )
                 poller()
             @addRulePoll()
+
+            return
         ]
         return {
             bindToController: {
                 node: '='
+                addedRules: '='
+
                 ruleName: '='
                 ruleTypes: '='
                 ruleType: '='
@@ -261,22 +299,56 @@
             templateUrl: './static/templates/rule-selector.html'
         }
     )
+    
+    app.directive('rulesList', () ->
+        template = '''
+          <h1>Existing Rules</h1>
+          <div class="row">
+            <div class="small-4 columns">
+            </div>
+            <div class="small-4 columns">
+            </div>
+            <div class="small-4 columns">
+            </div>
+          </div>
+        '''
+        controller = ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
+            $log.log('Beginning of ruleSelector directive controller', @node.id)
+
+            self = this
+            return
+        ]
+        return {
+            bindToController: {
+                node: '='
+                addedRules: '='
+            }
+            controller: controller
+            controllerAs: 'rlist'
+            restrict: 'E'
+            scope: {}
+            template: template
+            # templateUrl: './static/templates/rules-list.html'
+        }
+    )
 
     app.controller(
         'nosferatuController',
         ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
             console.log('beginning of main controller')
+            self = this
             submitButtonTexts = {false: 'Search for Node', true: 'Loading...'}
-            $scope.findingNodes = false
-            $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
+            this.findingNodes = false
+            this.submitButtonText = submitButtonTexts[this.findingNodes]
 
-            $scope.addedNodes = []
+            # $scope.addedNodes = []
+            this.addedNodes = []
 
-            $scope.nodes = []
-            $scope.foundNodes = {}
+            this.nodes = []
+            this.foundNodes = {}
 
             $scope.$watchCollection(
-                'addedNodes',
+                angular.bind(this, () -> return this.addedNodes),
                 ((newValue, oldValue) ->
                     $log.log("      - new: '#{newValue}', old: '#{oldValue}'")
                     newDiff = []
@@ -286,25 +358,23 @@
 
                     for id in newDiff
                         $log.log("Get node: #{id}")
-                        $scope.getNode(id)
+                        this.getNode(id)
                 )
             )
 
-            $scope.populateInitialNodes = () ->
+            this.populateInitialNodes = () ->
                 $log.log('Getting existing initial nodes')
 
                 $http.get('/nodes/get').then(
                     ((results) ->
                         $log.log(' - id', results.data)
-                        $scope.populateInitialNodesPoll(results.data)
+                        self.populateInitialNodesPoll(results.data)
                     ),
-                    ((error) ->
-                        $log.log(error)
-                    )
+                    errFunc
                 )
-            $scope.populateInitialNodes()
+            this.populateInitialNodes()
 
-            $scope.populateInitialNodesPoll = (jobId) ->
+            this.populateInitialNodesPoll = (jobId) ->
                 timeout = ''
                 count = 0
                 poller = () ->
@@ -320,7 +390,7 @@
                             else if results.status == 200
                                 $log.log("  - success: ", results.data)
                                 for key, id of results.data
-                                    $scope.getNode(id)
+                                    self.getNode(id)
 
                                 $timeout.cancel(timeout)
                                 return false
@@ -328,23 +398,19 @@
                             # Continue to call the poller every 2 seconds until its canceled
                             timeout = $timeout(poller, 2000)
                         ),
-                        ((error) ->
-                            $log.log(error)
-                        )
+                        errFunc
                     )
                 poller()
-            $scope.getNode = (id) ->
+            this.getNode = (id) ->
                 $http.get("/nodes/#{id}").then(
                     ((results) ->
                         $log.log(" - job: #{results.data}")
-                        $scope.getNodePoll(id, results.data)
+                        self.getNodePoll(id, results.data)
                     ),
-                    ((error) ->
-                        $log.log(error)
-                    )
+                    errFunc
                 )
 
-            $scope.getNodePoll = (id, jobId) ->
+            this.getNodePoll = (id, jobId) ->
                 timeout = ''
                 count = 0
                 poller = () ->
@@ -359,17 +425,17 @@
                                     return false
                             else if results.status == 200
                                 $log.log("  - success: ", results.data)
-                                $scope.nodes.push(results.data)
+                                self.nodes.push(results.data)
 
                                 # Its added now, so doesnt need to be found
-                                $log.log($scope.foundNodes)
-                                delete $scope.foundNodes[results.data.mac]
-                                console.log('      - data', $scope.nodes)
+                                $log.log(self.foundNodes)
+                                delete self.foundNodes[results.data.mac]
+                                console.log('      - data', self.nodes)
 
                                 # Reset the button to search for more nodes now
-                                if $scope.foundNodes.length == 0
-                                    $scope.findingNodes = false
-                                $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
+                                if self.foundNodes.length == 0
+                                    self.findingNodes = false
+                                self.submitButtonText = submitButtonTexts[self.findingNodes]
 
                                 $timeout.cancel(timeout)
                                 return false
@@ -377,28 +443,24 @@
                             # Continue to call the poller every 2 seconds until its canceled
                             timeout = $timeout(poller, 2000)
                         ),
-                        ((error) ->
-                            $log.log(error)
-                        )
+                        errFunc
                     )
                 poller()
 
-            $scope.findNodes = () ->
+            this.findNodes = () ->
                 $log.log('Searching for new nodes')
 
                 $http.get('/nodes/find').then(
                     ((results) ->
                         $log.log(' - id', results.data)
-                        $scope.findNodesPoll(results.data)
-                        $scope.findingNodes = true
-                        $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
+                        self.findNodesPoll(results.data)
+                        self.findingNodes = true
+                        self.submitButtonText = submitButtonTexts[self.findingNodes]
                     ),
-                    ((error) ->
-                        $log.log(error)
-                    )
+                    errFunc
                 )
 
-            $scope.findNodesPoll = (jobId) ->
+            this.findNodesPoll = (jobId) ->
                 timeout = ''
                 count = 0
                 poller = () ->
@@ -414,28 +476,117 @@
                             else if results.status == 200
                                 $log.log("   - success: ", results.data)
                                 for mac, item of results.data
-                                    $scope.foundNodes[mac] = results.data[mac]
-                                console.log('     - data', $scope.foundNodes)
+                                    self.foundNodes[mac] = results.data[mac]
+                                console.log('     - data', self.foundNodes)
 
-                                if $scope.foundNodes.length == 0
-                                    $scope.findingNodes = false
-                                $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
+                                if self.foundNodes.length == 0
+                                    self.findingNodes = false
+                                self.submitButtonText = submitButtonTexts[self.findingNodes]
                                 $timeout.cancel(timeout)
                                 return false
                             else
-                                $scope.findingNodes = false
-                                $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
+                                self.findingNodes = false
+                                self.submitButtonText = submitButtonTexts[self.findingNodes]
 
                             # Continue to call the poller every 2 seconds until its canceled
                             timeout = $timeout(poller, 2000)
                         ),
                         ((error) ->
                             $log.log(error)
-                            $scope.findingNodes = false
-                            $scope.submitButtonText = submitButtonTexts[$scope.findingNodes]
+                            self.findingNodes = false
+                            self.submitButtonText = submitButtonTexts[self.findingNodes]
                         )
                     )
                 poller()
+
+            return
+        ]
+    )
+
+    app.controller(
+        'nodeSettingsController',
+        ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
+            console.log('beginning of settings controller')
+
+            self = this
+
+            @node = $scope.$parent.node
+            @rules = []
+            @addedRules = []
+
+            $scope.$watchCollection(
+                angular.bind(this, () -> return @addedRules),
+                ((newValue, oldValue) ->
+                    $log.log('Added Rules')
+                    $log.log("      - new: '#{newValue}', old: '#{oldValue}'")
+                    newDiff = []
+                    for obj in newValue
+                        if obj not in oldValue
+                            newDiff.push(obj)
+
+                    $log.log(newDiff)
+
+                    for id in newDiff
+                        $log.log("Get node: ", id.id)
+                        self.getRule(id.id)
+                )
+            )
+
+            @getRule = (id) ->
+                $http.get("/nodes/#{self.node.id}").then(
+                    ((results) ->
+                        $log.log(" - job: #{results.data}")
+                        return [id, results.data]
+                    ),
+                    errFunc
+                ).then(
+                    ((input) ->
+                        [id, jobId] = input
+                        success = (results) ->
+                            $log.log("  - success: ", results)
+                            # this.nodes.push(results.data)
+                            #
+                            # # Its added now, so doesnt need to be found
+                            # $log.log(this.foundNodes)
+                            # delete this.foundNodes[results.data.mac]
+                            # console.log('      - data', this.nodes)
+                            #
+                            # # Reset the button to search for more nodes now
+                            # if this.foundNodes.length == 0
+                            #     this.findingNodes = false
+                            # this.submitButtonText = submitButtonTexts[this.findingNodes]
+                        pollFunc(success, "/nodes/#{self.node.id}/rules/#{jobId}", $http, $timeout, $log)
+                    ),
+                    errFunc
+                )
+
+            @getRules = () ->
+                $http.post("/nodes/#{self.node.id}/rules/all").then(
+                    ((results) ->
+                        return results.data
+                    ), errFunc
+                ).then(
+                    ((jobId) ->
+                        $log.log('  - job id', jobId)
+                        config = {
+                            params: {
+                                'job_id': jobId
+                            }
+                        }
+                        data = {
+                            'job_id': jobId
+                        }
+                        $http.get("/nodes/#{self.node.id}/rules/all", config).then(
+                            ((results) ->
+                                for id, rule of results
+                                    self.getRule(rule[id])
+                            ), errFunc
+                        )
+                    )
+                )
+            @getRules()
+
+            return
         ]
     )
 )()

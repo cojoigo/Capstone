@@ -88,3 +88,22 @@ def add_rule_task(node_id, rule):
     return {
         'id': 9999999,
     }
+
+
+@celery.task
+def get_all_rules_task(node_id):
+    return {
+        'id1': 9999998,
+        'id2': 9999999,
+    }
+
+
+@celery.task
+def get_rule_task(node_id, rule_id):
+    return {
+        'id': 9999998,
+        'priority': 0,
+        'name': 'Something',
+        'action': 'Turn On',
+        'days': ['Monday', 'Tuesday'],
+    }

@@ -187,14 +187,14 @@ def get_all_rules(node_id):
 def get_single_rule(node_id, rule_id):
     if request.method == 'POST':
         print('Beginning add rule', node_id)
-        job = add_rule_task.delay(node_id, rule_id)
+        job = get_rule_task.delay(node_id, rule_id)
         return job.id
 
     elif request.method == 'GET':
         print('Poll add rule', node_id, request.args)
 
         job_id = request.args['job_id']
-        job = add_rule_task.AsyncResult(job_id)
+        job = get_rule_task.AsyncResult(job_id)
         print('   - job state', job.state)
         if job.ready():
             print('    - this singluar gotten node', job_id, job.result['id'])

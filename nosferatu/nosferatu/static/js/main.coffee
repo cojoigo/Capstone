@@ -1,10 +1,15 @@
 (() ->
-    pollFunc = (func, poll, http, timeout, log) ->
+    errFunc = () ->
+        ((error) ->
+            $log.log(error)
+        )
+
+    pollFunc = (httpSomething, func, timeout, log) ->
         time = ''
         count = 0
         poller = () ->
-            log.log("Polling #{poll}", count)
-            http.get(poll).then(
+            log.log("PollFuncing", count)
+            httpSomething.then(
                 ((results) ->
                     if results.status == 202
                         log.log("  - failed:", results.data)
@@ -19,15 +24,9 @@
 
                     # Continue to call the poller every 2 seconds until its canceled
                     time = timeout(poller, 2000)
-                ),
-                errFunc
+                ), errFunc
             )
         poller()
-
-    errFunc = () ->
-        ((error) ->
-            $log.log(error)
-        )
 
     app = angular.module('nosferatuApp', ['mm.foundation'])
     app.config(['$interpolateProvider', ($interpolateProvider) ->
@@ -163,7 +162,6 @@
                     (not @daysOfWeekSelected.length) or
                     (if (@scheduleTimeType is 'auto') then (not @scheduleZipCode?) else false)
                 )
-                $log.log("diabling the button? #{result}")
                 return result
 
             @ruleTypes = ['Schedule', 'Event', 'Motion']
@@ -299,29 +297,33 @@
             templateUrl: './static/templates/rule-selector.html'
         }
     )
-    
+
     app.directive('rulesList', () ->
         template = '''
           <h1>Existing Rules</h1>
-          <div class="row">
+          <div class="row" ng-repeat="rule in rlist.rules">
             <div class="small-4 columns">
+              Priority: {[rule.priority]}
             </div>
             <div class="small-4 columns">
+              Name: {[rule.name]}
             </div>
             <div class="small-4 columns">
+              Action: {[rule.action]}
+              Days: {[rule.days]}
             </div>
           </div>
         '''
         controller = ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
-            $log.log('Beginning of ruleSelector directive controller', @node.id)
-
+            $log.log('Beginning of rules List directive controller', @node.id)
             self = this
+
             return
         ]
         return {
             bindToController: {
                 node: '='
-                addedRules: '='
+                rules: '='
             }
             controller: controller
             controllerAs: 'rlist'
@@ -511,7 +513,7 @@
             self = this
 
             @node = $scope.$parent.node
-            @rules = []
+            @rules = {}
             @addedRules = []
 
             $scope.$watchCollection(
@@ -533,7 +535,8 @@
             )
 
             @getRule = (id) ->
-                $http.get("/nodes/#{self.node.id}").then(
+                $log.log("Getting the rule, #{id}")
+                $http.post("/nodes/#{self.node.id}/rules/#{id}").then(
                     ((results) ->
                         $log.log(" - job: #{results.data}")
                         return [id, results.data]
@@ -544,25 +547,27 @@
                         [id, jobId] = input
                         success = (results) ->
                             $log.log("  - success: ", results)
-                            # this.nodes.push(results.data)
-                            #
-                            # # Its added now, so doesnt need to be found
-                            # $log.log(this.foundNodes)
-                            # delete this.foundNodes[results.data.mac]
-                            # console.log('      - data', this.nodes)
-                            #
-                            # # Reset the button to search for more nodes now
-                            # if this.foundNodes.length == 0
-                            #     this.findingNodes = false
-                            # this.submitButtonText = submitButtonTexts[this.findingNodes]
-                        pollFunc(success, "/nodes/#{self.node.id}/rules/#{jobId}", $http, $timeout, $log)
+                            self.rules[results.id] = results
+
+                            # Its added now, so doesnt need to be found
+                            delete self.addedRules[results.id]
+                            $log.log("All the rules", self.rules)
+
+                        config = {
+                            params: {
+                                job_id: jobId
+                            }
+                        }
+                        pollFunc($http.get("/nodes/#{self.node.id}/rules/#{id}", config), success, $timeout, $log)
                     ),
                     errFunc
                 )
 
             @getRules = () ->
+                $log.log("Getting the rules")
                 $http.post("/nodes/#{self.node.id}/rules/all").then(
                     ((results) ->
+                        $log.log("rules gotten ", results.data)
                         return results.data
                     ), errFunc
                 ).then(
@@ -578,8 +583,10 @@
                         }
                         $http.get("/nodes/#{self.node.id}/rules/all", config).then(
                             ((results) ->
-                                for id, rule of results
-                                    self.getRule(rule[id])
+                                $log.log(' - gotten rules: ', results.data)
+                                for id, rule of results.data
+                                    $log.log(' - ', id, rule)
+                                    self.getRule(rule)
                             ), errFunc
                         )
                     )

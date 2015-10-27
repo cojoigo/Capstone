@@ -1,7 +1,7 @@
 import logging
 
 from . import cache, celery, db
-from .models import Node
+from .models import Node, Rule#, DaysOfWeek, ScheduleTypes, TimeOfDay
 from .find_nodes import find_nodes
 
 log = logging.getLogger()
@@ -85,9 +85,30 @@ def test_node_task(node_id, stop=False):
 
 @celery.task
 def add_rule_task(node_id, rule):
-    return {
-        'id': 9999999,
-    }
+    try:
+        print(rule)
+        rule = Rule(
+            name=rule['name'],
+            type=rule['type'],
+            turn_on=rule['action'],
+            days='.'.join(rule['days']),
+            schedule_type=rule['schedule_type'],
+            hour=rule['hour'],
+            minute=rule['minute'],
+            zip_code=rule['zip_code'],
+            time_of_day=rule['time_of_day'],
+
+            node=node_id,
+        )
+        db.session.add(rule)
+        db.session.commit()
+
+        print(rule.id)
+
+        return {'id': rule.id}
+    except Exception as e:
+        log.exception(e)
+        raise
 
 
 @celery.task
@@ -101,9 +122,18 @@ def get_all_rules_task(node_id):
 @celery.task
 def get_rule_task(node_id, rule_id):
     return {
+        '9999998': {
         'id': 9999998,
         'priority': 0,
         'name': 'Something',
         'action': 'Turn On',
         'days': ['Monday', 'Tuesday'],
-    }
+        },
+        '9999999': {
+        'id': 9999999,
+        'priority': 1,
+        'name': 'Second Rule',
+        'action': 'Turn Off',
+        'days': ['Wednesday'],
+        },
+    }[rule_id]

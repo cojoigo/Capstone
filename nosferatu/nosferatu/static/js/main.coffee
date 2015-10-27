@@ -218,7 +218,7 @@
                     'minute': @minuteInDay
 
                     # auto
-                    'zip_code': @scheduleZipCode
+                    'zip_code': @scheduleZipCode or ''
                     'time_of_day': @scheduleTimeOfDayType
                 }
 
@@ -301,18 +301,27 @@
     app.directive('rulesList', () ->
         template = '''
           <h1>Existing Rules</h1>
-          <div class="row" ng-repeat="rule in rlist.rules">
-            <div class="small-4 columns">
-              Priority: {[rule.priority]}
-            </div>
-            <div class="small-4 columns">
-              Name: {[rule.name]}
-            </div>
-            <div class="small-4 columns">
-              Action: {[rule.action]}
-              Days: {[rule.days]}
-            </div>
-          </div>
+          <table>
+          <tr>
+            <td><b>Priority</b></td>
+            <td><b>Name</b></td>
+            <td><b>Action</b></td>
+            <td><b>Days</b></td>
+          </tr>
+          <tr ng-repeat="rule in rlist.rules">
+            <td>
+              {[rule.priority]}
+            </td>
+            <td>
+              {[rule.name]}
+            </td>
+            <td>
+              {[rule.action]}
+            <td>
+              {[rule.days]}
+            </td>
+          </tr>
+          </table>
         '''
         controller = ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
             $log.log('Beginning of rules List directive controller', @node.id)

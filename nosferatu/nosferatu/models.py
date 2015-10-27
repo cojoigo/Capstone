@@ -1,5 +1,5 @@
 from flask_user import UserMixin
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects import postgresql
 
@@ -10,10 +10,13 @@ class Node(db.Model):
     __tablename__ = 'nodes'
 
     id = db.Column(db.Integer, primary_key=True)
+    mac_addr = db.Column(postgresql.MACADDR, primary_key=True)
+
     name = db.Column(db.String(35), nullable=False)
     ip_addr = db.Column(postgresql.INET)
-    mac_addr = db.Column(postgresql.MACADDR)
+
     user_id = db.Column(db.Integer, ForeignKey('users.id'))
+    rules = relationship('Rule', backref='nodes')
 
     def __init__(self, name, ip_addr, mac_addr, user_id):
         self.name = name
@@ -23,6 +26,42 @@ class Node(db.Model):
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
+
+
+# schedule_types = ['Auto', 'Manual']
+# time_of_day = ['Sunset', 'Sunrise']
+# ScheduleTypes(*schedule_types, name='ScheduleTypes')
+# TimeOfDay(*time_of_day, name='TimeOfDay')
+
+class Rule(db.Model):
+    __tablename__ = 'rules'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), primary_key=True, nullable=False)
+
+    type = db.Column(db.String(255), nullable=False)
+    turn_on = db.Column(db.Boolean(), nullable=False)
+    days = db.Column(db.String(56), nullable=False)
+
+    # Schedules
+    schedule_type = db.Column(db.String(56), nullable=False)
+
+    # - Manual
+    hour = db.Column(db.Integer)
+    minute = db.Column(db.Integer)
+
+    # - Auto
+    zip_code = db.Column(db.Integer)
+    time_of_day = db.Column(db.String(56))
+
+    node = db.Column(db.Integer, ForeignKey('nodes.id'))
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    def __repr__(self):
+        return '<id {}, {}>'.format(self.id, self.username)
 
 
 class User(db.Model, UserMixin):

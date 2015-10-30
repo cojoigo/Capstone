@@ -3,7 +3,7 @@ import logging
 from . import cache, celery, db
 from .models import Node, Rule#, DaysOfWeek, ScheduleTypes, TimeOfDay
 from .find_nodes import find_nodes
-
+import pprint
 log = logging.getLogger()
 
 
@@ -32,13 +32,17 @@ def find_nodes_task(self):
             'mac': 'A0:2B:03:C3:F4',
             'on': True,
         },
-    }'''
-
+    }
+    '''
+    
     return nodes
 
 
 @celery.task(bind=True)
 def get_node_task(self, node_id):
+
+    #nodes = Node.query.filter_by().all()
+    
     node = {
         'id': 12341238,
         'ip': '1.2.3.4',

@@ -1,7 +1,10 @@
 import subprocess
-
+import pprint 
+from . import cache, celery, db
+from .models import Node
 
 def find_nodes():
+    
     # Get list of IP/MAC pairs currently on network
     arp = subprocess.check_output("arp").decode()
     arp = arp.replace("\n", " ")
@@ -17,25 +20,23 @@ def find_nodes():
                 if ":" in mac:
                     devices.append([ip, mac])
 
-    # TODO: Query DB for known IP/MAC
-    # Look in views.py for example DB request call
-    db_nodes = []
+    db_nodes = Node.query.all()
     known_nodes = []
     unknown_nodes = []
     changed_nodes = []
 
-    # Used as example. Need real DB call here to populate db_nodes
-    db_nodes.append(["192.168.42.10", "9c:d9:17:62:65:62"])
+    # TODO Used as example because VM does not have wifi network
+    devices.append(["192.168.42.10", "9c:d9:17:62:65:62"])
 
     # Compare devices on network with nodes already in DB
     found = False
     for device in devices:
         found = False
         for db_node in db_nodes:
-            if device[1] == db_node[1]:
+            if device[1] == db_node.mac_addr:
                 # MAC match. Either known or changed IP
                 found = True
-                if device[0] == db_node[0]:
+                if device[0] == db_node.ip_addr:
                     known_nodes.append(device)
                 else:
                     changed_nodes.append(device)
@@ -46,30 +47,32 @@ def find_nodes():
             unknown_nodes.append(device)
 
     # TODO: Remove debug printing
-    print("known")
-    print(known_nodes)
-    print()
-    print("unknown")
-    print(unknown_nodes)
-    print()
-    print("changed")
-    print(changed_nodes)
+    #print("known")
+    #print(known_nodes)
+    #print()
+    #print("unknown")
+    #print(unknown_nodes)
+    #print()
+    #print("changed")
+    #print(changed_nodes)
 
     # TODO: What to do with nodes in Database that are no longer on the network?
     #       - Remove them from the DB
     #       - Keep them in the DB in case they were temporarily disconnected
 
-    # TODO: Need to authenticate unknown_nodes before presenting them to the user
+    # Authenticate and format nodes found on the network that are not in DB as a dict, to show to user
+    formatted_unknown_nodes = {}
 
-    # Unknown devices-> return dictionary (same style as in tasks.py)
-    formatted_unknown_nodes = []
     for node in unknown_nodes:
-        formatted_unknown_nodes.append({'ip': node[0], 'mac': node[1]})
+        status = node_auth( node[0] )
+        if status.strip(' \t\r\n') == "N0$fEr@tU":
+            formatted_unknown_nodes[ node[1] ] =  {'ip': node[0], 'mac': node[1]}
 
-    # print("\nFormatted")
-    # pprint.pprint(formatted_unknown_nodes)
+    print("\nFormatted")
+    pprint.pprint(formatted_unknown_nodes)
 
     # Known MACs with different IPs -> update DB with new IPs
     # TODO: Add contents of changed_nodes to DB
     # Look in tasks.py for a DB write example
-    return formatted_known_nodes
+    
+    return formatted_unknown_nodes

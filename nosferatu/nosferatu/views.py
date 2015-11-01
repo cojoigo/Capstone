@@ -130,6 +130,12 @@ def test_stop(node_id):
     return 'SUCCESS', 200
 
 
+@app.route('/nodes/<int:node_id>/status', methods=['GET'])
+@login_required
+def get_node_status(node_id):
+    return jsonify(get_node_status_task(node_id))
+
+
 @app.route('/nodes/<node_id>/rules', methods=['POST', 'GET'])
 @login_required
 def add_rule(node_id):

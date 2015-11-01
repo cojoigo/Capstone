@@ -615,6 +615,26 @@
                 )
             @getRules()
 
+            @checkNodeStatus = () ->
+                time = ''
+                poller = () ->
+                    $log.log("Checking Node(#{self.node.id})'s status'")
+                    $http.get("/nodes/#{self.node.id}/status").then(
+                        ((results) ->
+                            if results.status == 202
+                                $log.log("  - failed:", results.data)
+                            else if results.status == 200
+                                $log.log(" - ", results.data)
+                                date = new Date()
+                                self.lastUpdate = date.toLocaleString()
+
+                            # Continue to call the poller every 2 seconds until its canceled
+                            time = $timeout(poller, 5000)
+                        ), errFunc
+                    )
+                poller()
+            @checkNodeStatus()
+
             return
         ]
     )

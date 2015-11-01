@@ -168,3 +168,12 @@ def delete_rule_task(node_id, rule_id):
     except:
         raise
     return {'result': False}
+
+
+def get_node_status_task(node_id):
+    print("Wahho testing node", node_id)
+    return {
+        'led': 1,
+        'relay': 0,
+        'motion': 1,
+    }

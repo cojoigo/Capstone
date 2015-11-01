@@ -156,3 +156,15 @@ def get_rule_task(node_id, rule_id):
             'turn_on': str(bool(rule.turn_on)),
             'days': [day.title() for day in rule.days.split(',')],
         }
+
+
+def delete_rule_task(node_id, rule_id):
+    try:
+        rule = Rule.query.filter_by(node=node_id, id=rule_id).first()
+        if rule:
+            db.session.delete(rule)
+            db.session.commit()
+            return {'result': rule.id}
+    except:
+        raise
+    return {'result': False}

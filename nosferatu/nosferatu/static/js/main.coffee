@@ -301,14 +301,16 @@
           <h1>Existing Rules</h1>
           <table>
           <tr>
-            <td><b>Priority</b></td>
+            <td><b>Delete</b></td>
             <td><b>Name</b></td>
             <td><b>Turn On</b></td>
             <td><b>Days</b></td>
           </tr>
           <tr ng-repeat="rule in rlist.rules">
             <td>
-              {[rule.priority]}
+              <button type="submit" class="btn btn-default" ng-click="rlist.delete(rule.id)">
+                Delete
+              </button>
             </td>
             <td>
               {[rule.name]}
@@ -324,6 +326,19 @@
         controller = ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
             $log.log('Beginning of rules List directive controller', @node.id)
             self = this
+
+            @delete = (rule_id) ->
+                $log.log("Deleting rule #{rule_id}")
+
+                $http.delete("/nodes/#{self.node.id}/rules/#{rule_id}").then(
+                    ((results) ->
+                        $log.log(' - deleted successfully', results.data)
+
+                        delete self.rules[results.data.result]
+
+                        $log.log(' - new rules, ', self.rules)
+                    ), errFunc
+                )
 
             return
         ]

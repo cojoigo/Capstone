@@ -173,7 +173,7 @@ def get_all_rules(node_id):
             return 'Job is not ready', 202
 
 
-@app.route('/nodes/<int:node_id>/rules/<int:rule_id>', methods=['POST', 'GET'])
+@app.route('/nodes/<int:node_id>/rules/<int:rule_id>', methods=['POST', 'GET', 'DELETE'])
 @login_required
 def get_single_rule(node_id, rule_id):
     if request.method == 'POST':
@@ -192,3 +192,7 @@ def get_single_rule(node_id, rule_id):
             return jsonify(job.result)
         else:
             return 'Job is not ready', 202
+    elif request.method == 'DELETE':
+        print('Deleting rule', node_id, request.args)
+
+        return jsonify(delete_rule_task(node_id, rule_id))

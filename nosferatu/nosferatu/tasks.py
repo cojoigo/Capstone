@@ -2,7 +2,7 @@ import logging
 
 from . import cache, celery, db
 from .models import Node, Rule#, DaysOfWeek, ScheduleTypes, TimeOfDay
-from .find_nodes import find_nodes
+from .node_find import find_nodes
 import pprint
 log = logging.getLogger()
 
@@ -34,15 +34,23 @@ def find_nodes_task(self):
         },
     }
     '''
-    
+
     return nodes
 
 
 @celery.task(bind=True)
 def get_node_task(self, node_id):
 
-    #nodes = Node.query.filter_by().all()
-    
+    if node_id == '1':
+        node = {
+            'id': 1,
+            'ip': '192.168.1.32',
+            'mac': 'A0:2B:03:C3:F3',
+            'name': 'Bedroom',
+            'on': True,
+        }
+        return node
+
     node = {
         'id': 12341238,
         'ip': '1.2.3.4',
@@ -56,7 +64,8 @@ def get_node_task(self, node_id):
 @celery.task(bind=True)
 def get_nodes_task(self):
     nodes = {
-        'id1': 12341238,
+        'id1': 1,
+        'id2': 12341238,
     }
     return nodes
 
@@ -89,17 +98,28 @@ def test_node_task(node_id, stop=False):
 
 @celery.task
 def add_rule_task(node_id, rule):
+    log.debug(rule)
+
     try:
-        print(rule)
+        # Validate the zipcode
+        zip_code = rule['zip_code']
+        for digit in zip_code:
+            try:
+                int(digit)
+            except ValueError:
+                zip_code = 0
+        if not zip_code:
+            zip_code = 0
+
         rule = Rule(
             name=rule['name'],
             type=rule['type'],
-            turn_on=rule['action'],
+            turn_on=rule['turn_on'],
             days='.'.join(rule['days']),
             schedule_type=rule['schedule_type'],
             hour=rule['hour'],
             minute=rule['minute'],
-            zip_code=rule['zip_code'],
+            zip_code=zip_code,
             time_of_day=rule['time_of_day'],
 
             node=node_id,
@@ -117,27 +137,22 @@ def add_rule_task(node_id, rule):
 
 @celery.task
 def get_all_rules_task(node_id):
-    return {
-        'id1': 9999998,
-        'id2': 9999999,
-    }
+    rules = Rule.query.filter_by(node=node_id).all()
+
+    if rules:
+        result = {}
+        for i, rule in enumerate(rules):
+            result['id{}'.format(i)] = rule.id
+        return result
 
 
 @celery.task
 def get_rule_task(node_id, rule_id):
-    return {
-        '9999998': {
-        'id': 9999998,
-        'priority': 0,
-        'name': 'Something',
-        'action': 'Turn On',
-        'days': ['Monday', 'Tuesday'],
-        },
-        '9999999': {
-        'id': 9999999,
-        'priority': 1,
-        'name': 'Second Rule',
-        'action': 'Turn Off',
-        'days': ['Wednesday'],
-        },
-    }[rule_id]
+    rule = Rule.query.filter_by(node=node_id, id=rule_id).first()
+    if rule:
+        return {
+            'id': rule.id,
+            'name': rule.name,
+            'turn_on': str(bool(rule.turn_on)),
+            'days': [day.title() for day in rule.days.split(',')],
+        }

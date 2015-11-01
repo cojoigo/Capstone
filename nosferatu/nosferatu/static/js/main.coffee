@@ -209,7 +209,7 @@
                 data = {
                     'name': @ruleName
                     'type': @ruleType
-                    'action': @ruleTurnOn
+                    'turn_on': @ruleTurnOn
                     'days': @daysOfWeekSelected
                     'schedule_type': @scheduleTimeType
 
@@ -231,7 +231,6 @@
                         $log.log(error)
                     )
                 )
-            @addRule()
 
             @addRulePoll = (jobId) ->
                 if not jobId?
@@ -270,7 +269,6 @@
                         )
                     )
                 poller()
-            @addRulePoll()
 
             return
         ]
@@ -305,7 +303,7 @@
           <tr>
             <td><b>Priority</b></td>
             <td><b>Name</b></td>
-            <td><b>Action</b></td>
+            <td><b>Turn On</b></td>
             <td><b>Days</b></td>
           </tr>
           <tr ng-repeat="rule in rlist.rules">
@@ -316,7 +314,7 @@
               {[rule.name]}
             </td>
             <td>
-              {[rule.action]}
+              {[rule.turn_on]}
             <td>
               {[rule.days]}
             </td>

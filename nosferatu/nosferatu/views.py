@@ -93,15 +93,6 @@ def find_nodes(job_id):
         return 'ERROR', 202
 
 
-# node = Node.query.filter_by(id=job.result).first()
-# nodes = {
-#     'id': node.id,
-#     'ip': node.ip_addr,
-#     'mac': node.mac_addr,
-#     'userid': node.user_id,
-# }
-
-
 @app.route('/nodes/<node_id>', methods=['GET'])
 @login_required
 def get_node(node_id):
@@ -111,7 +102,7 @@ def get_node(node_id):
     return job.id
 
 
-@app.route('/nodes/<node_id>/jobs/<job_id>', methods=['GET'])
+@app.route('/nodes/<int:node_id>/jobs/<job_id>', methods=['GET'])
 @login_required
 def node_jobs(node_id, job_id):
     print(' - Get Node Task', node_id, job_id)
@@ -155,13 +146,13 @@ def add_rule(node_id):
         job = add_rule_task.AsyncResult(job_id)
         print('   - job state', job.state)
         if job.ready():
-            print('    - this singluar gotten rule', job_id, job.result['id'])
+            print('    - this added rule', job_id, job.result)
             return jsonify(job.result)
         else:
             return 'Job is not ready', 202
 
 
-@app.route('/nodes/<node_id>/rules/all', methods=['POST', 'GET'])
+@app.route('/nodes/<int:node_id>/rules/all', methods=['POST', 'GET'])
 @login_required
 def get_all_rules(node_id):
     if request.method == 'POST':
@@ -176,13 +167,13 @@ def get_all_rules(node_id):
         job = get_all_rules_task.AsyncResult(job_id)
         print('   - job state', job.state)
         if job.ready():
-            print('    - this singluar gotten node', job_id, job.result)
+            print('    - all the rules', job_id, job.result)
             return jsonify(job.result)
         else:
             return 'Job is not ready', 202
 
 
-@app.route('/nodes/<node_id>/rules/<rule_id>', methods=['POST', 'GET'])
+@app.route('/nodes/<int:node_id>/rules/<int:rule_id>', methods=['POST', 'GET'])
 @login_required
 def get_single_rule(node_id, rule_id):
     if request.method == 'POST':
@@ -197,7 +188,7 @@ def get_single_rule(node_id, rule_id):
         job = get_rule_task.AsyncResult(job_id)
         print('   - job state', job.state)
         if job.ready():
-            print('    - this singluar gotten node', job_id, job.result['id'])
+            print('    - this singluar gotten node', job_id, job.result)
             return jsonify(job.result)
         else:
             return 'Job is not ready', 202

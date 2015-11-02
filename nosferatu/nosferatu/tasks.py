@@ -3,6 +3,8 @@ import logging
 from . import cache, celery, db
 from .models import Node, Rule#, DaysOfWeek, ScheduleTypes, TimeOfDay
 from .node_find import find_nodes
+from .status_request import *
+from .status_change import *
 import pprint
 log = logging.getLogger()
 
@@ -171,6 +173,16 @@ def delete_rule_task(node_id, rule_id):
 
 
 def get_node_status_task(node_id):
+
+    # TODO Need to get Node's IP based on ID
+    # TODO Also need which status to get: LED, RELAY, MOTION
+    #status = status_request( ip, status_type )
+    
+    #Status will be a string: "ON", "OFF", or a number
+    ## "1" == Error establishing TCP connection to node
+    ## "2" == Error sending status request packet
+    ## "3" == Waiting for status reply timed out
+
     print("Wahho testing node", node_id)
     return {
         'led': 1,

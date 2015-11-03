@@ -13,22 +13,36 @@ log = logging.getLogger()
 #######################################
 def get_node_status_task(node_id):
 
-    # TODO Need to get Node's IP based on ID
-    # TODO Also need which status to get: LED, RELAY, MOTION
-    #status = status_request( ip, status_type )
-
-    #Status will be a string: "ON", "OFF", or a number
-    ## "1" == Error establishing TCP connection to node
-    ## "2" == Error sending status request packet
-    ## "3" == Waiting for status reply timed out
-
     print("Wahho testing node", node_id)
+    
+    '''
+    node = Node.query.filter_by(id=node_id).first()
+    ip_str = str(node.ip_addr)
+    
+    led_status = status_request( ip_str, "LED" )
+    relay_status = status_request( ip_str, "MOTION" )
+    motion_status = status_request( ip_str, "RELAY" )
+    
+    #Status will be a number: 
+    ## 0 == status OFF
+    ## 1 == status ON
+    ## 2 == Error establishing TCP connection to node
+    ## 3 == Error sending status request packet
+    ## 4 == Waiting for status reply timed out
+    ## 5 == Received unknown status from node 
+
+    return {
+        'led': led_status,
+        'relay': relay_status,
+        'motion': motion_status,
+    }
+    '''
+
     return {
         'led': 1,
         'relay': 0,
         'motion': 1,
     }
-
 
 @celery.task
 def test_node_task(node_id, stop=False):

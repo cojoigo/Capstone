@@ -26,7 +26,7 @@ def find_nodes():
     changed_nodes = []
 
     # TODO Used as example because VM does not have wifi network
-    devices.append(["192.168.42.10", "9c:d9:17:62:65:62"])
+    devices.append(["192.168.42.100", "9c:d9:17:62:65:62"])
 
     # Compare devices on network with nodes already in DB
     found = False

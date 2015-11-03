@@ -9,15 +9,17 @@ from datetime import *
 def change_status( node_ip, request_type, status, send_port = 12001 ):
 
     if "192.168" in node_ip:
-        print("Good node")
+        #print("Good node")
+        pass
     else:
-        print("invalid node")
+        print("invalid node for status change " + request_type)
         return 1
 
     if status == "ON" or status == "OFF":
-        print("Good status")
+        #print("Good status")
+        pass
     else:
-        print("Invalid status")
+        print("Invalid status for status change " + request_type)
         return 2
 
     addr = (node_ip, send_port)
@@ -25,7 +27,7 @@ def change_status( node_ip, request_type, status, send_port = 12001 ):
 
     try:
         sender.connect(addr)
-        sendtime = datetime.now()
+        #sendtime = datetime.now()
     except:
         print("Could not connect to change status of " + request_type)
         return 3
@@ -43,10 +45,14 @@ def change_status( node_ip, request_type, status, send_port = 12001 ):
     except:
         print("Waiting for message timed out")
         return 5
+    
+    sender.shutdown( SHUT_RDWR )
+    sender.close()
 
-    recvtime = datetime.now()
+    #recvtime = datetime.now()
 
-    print("Roundtrip time " + str(recvtime-sendtime))
+    #print("Roundtrip time " + str(recvtime-sendtime))
 
-    print(status)
+    #print(status)
+
     return status

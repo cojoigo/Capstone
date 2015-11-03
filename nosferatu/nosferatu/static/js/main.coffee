@@ -78,11 +78,11 @@
 
                 self.updateSaveText(this, true)
                 sendInfo = {
-                    'id': this.id
-                    'ip': this.ip
-                    'mac': this.mac
-                    'name': this.name
+                    ip: this.ip,
+                    mac: this.mac,
+                    name: this.name or '',
                 }
+                console.log('SENF', sendInfo)
                 $http.post('/nodes/add/', sendInfo).then(
                     ((results) ->
                         $log.log(" - add node", results.data)
@@ -110,10 +110,10 @@
                                     $timeout.cancel(timeout)
                                     return false
                             else if results.status == 200
-                                $log.log("    - success: ", $scope.$parent.addedNodes, results.data.id)
+                                $log.log("    - success: ", self.addedNodes, results.data.id)
 
-                                $scope.$parent.addedNodes.push(results.data.id)
-                                console.log('    - data', $scope.$parent.addedNodes)
+                                self.addedNodes.push(results.data.id)
+                                console.log('    - data', self.addedNodes)
 
                                 $timeout.cancel(timeout)
                                 return false
@@ -365,10 +365,9 @@
             this.findingNodes = false
             this.submitButtonText = submitButtonTexts[this.findingNodes]
 
-            # $scope.addedNodes = []
             this.addedNodes = []
 
-            this.nodes = []
+            this.nodes = {}
             this.foundNodes = {}
 
             $scope.$watchCollection(
@@ -382,7 +381,7 @@
 
                     for id in newDiff
                         $log.log("Get node: #{id}")
-                        this.getNode(id)
+                        self.getNode(id)
                 )
             )
 
@@ -449,7 +448,7 @@
                                     return false
                             else if results.status == 200
                                 $log.log("  - success: ", results.data)
-                                self.nodes.push(results.data)
+                                self.nodes[results.data.id] = results.data
 
                                 # Its added now, so doesnt need to be found
                                 $log.log(self.foundNodes)
@@ -537,6 +536,7 @@
             @node = $scope.$parent.node
             @rules = {}
             @addedRules = []
+            @deleted = false
 
             $scope.$watchCollection(
                 angular.bind(this, () -> return @addedRules),
@@ -555,6 +555,20 @@
                         self.getRule(id.id)
                 )
             )
+
+            @delete = (nodes) ->
+                $log.log("Deleting rule #{self.node.id}")
+
+                $http.delete("/nodes/#{self.node.id}").then(
+                    ((results) ->
+                        $log.log(' - deleted successfully', results.data)
+
+                        delete nodes[results.data.result]
+                        self.deleted = true
+
+                        $log.log(' - new rules, ', nodes)
+                    ), errFunc
+                )
 
             @getRule = (id) ->
                 $log.log("Getting the rule, #{id}")
@@ -621,6 +635,8 @@
                     $log.log("Checking Node(#{self.node.id})'s status'")
                     $http.get("/nodes/#{self.node.id}/status").then(
                         ((results) ->
+                            if self.deleted
+                                return false
                             if results.status == 202
                                 $log.log("  - failed:", results.data)
                             else if results.status == 200

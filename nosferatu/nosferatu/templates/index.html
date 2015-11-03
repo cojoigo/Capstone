@@ -12,11 +12,11 @@
         <tab ng-repeat="node in main.foundNodes"
              heading="{[node.ip]}"
         >
-          <found-node node="node" addedNodes="main.addedNodes">
+          <found-node node="node" added-nodes="main.addedNodes">
             <form role="form" ng-submit="node.add()">
               <div class="row">
                 <div class="small-4 columns">
-                  <input type="text" placeholder="Node Name" />
+                  <input type="text" placeholder="Node Name" ng-model="node.name"/>
                 </div>
                 <div class="small-4 columns">
                   <label>Node IP:
@@ -69,6 +69,9 @@
                 <label>{[settings.lastUpdate]}</label>
               </div>
               <div class="small-4 columns">
+                <button type="button" class="btn btn-default" ng-click="settings.delete(main.nodes)">
+                  Delete
+                </button>
               </div>
             </div>
           </form>

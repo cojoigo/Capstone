@@ -10,7 +10,7 @@ class Node(db.Model):
     __tablename__ = 'nodes'
 
     id = db.Column(db.Integer, primary_key=True)
-    mac_addr = db.Column(postgresql.MACADDR, primary_key=True)
+    mac_addr = db.Column(postgresql.MACADDR)
 
     name = db.Column(db.String(35), nullable=False)
     ip_addr = db.Column(postgresql.INET)
@@ -26,6 +26,14 @@ class Node(db.Model):
 
     def __repr__(self):
         return '<id {}>'.format(self.id)
+
+    def to_json(self):
+        return {
+            'id': self.id,
+            'mac': self.mac_addr,
+            'name': self.name,
+            'ip_addr': self.ip_addr,
+        }
 
 
 # schedule_types = ['Auto', 'Manual']

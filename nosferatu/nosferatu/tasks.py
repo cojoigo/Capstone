@@ -1,91 +1,22 @@
 import logging
 
 from . import cache, celery, db
-from .models import Node, Rule#, DaysOfWeek, ScheduleTypes, TimeOfDay
+from .models import Node, Rule
 from .node_find import find_nodes
-import pprint
+
 log = logging.getLogger()
 
 
-@celery.task(bind=True)
-def find_nodes_task(self):
-
-    nodes = find_nodes()
-
-    '''
-    nodes = {
-        'A0:2B:03:C3:F3': {
-            'id': 12341234,
-            'ip': '1.2.3.4',
-            'mac': 'A0:2B:03:C3:F3',
-            'on': True,
-        },
-        'A0:2B:03:C3:F5': {
-            'id': 12341235,
-            'ip': '2.2.3.4',
-            'mac': 'A0:2B:03:C3:F5',
-            'on': False,
-        },
-        'A0:2B:03:C3:F4': {
-            'id': 12341236,
-            'ip': '3.2.3.4',
-            'mac': 'A0:2B:03:C3:F4',
-            'on': True,
-        },
+#######################################
+# Direct Node Communication
+#######################################
+def get_node_status_task(node_id):
+    print("Wahho testing node", node_id)
+    return {
+        'led': 1,
+        'relay': 0,
+        'motion': 1,
     }
-    '''
-
-    return nodes
-
-
-@celery.task(bind=True)
-def get_node_task(self, node_id):
-
-    if node_id == '1':
-        node = {
-            'id': 1,
-            'ip': '192.168.1.32',
-            'mac': 'A0:2B:03:C3:F3',
-            'name': 'Bedroom',
-            'on': True,
-        }
-        return node
-
-    node = {
-        'id': 12341238,
-        'ip': '1.2.3.4',
-        'mac': 'A0:2B:03:C3:F3',
-        'name': 'Living room',
-        'on': True,
-    }
-    return node
-
-
-@celery.task(bind=True)
-def get_nodes_task(self):
-    nodes = {
-        'id1': 1,
-        'id2': 12341238,
-    }
-    return nodes
-
-
-@celery.task(bind=True)
-def add_node_task(self, req):
-    return {'id': 12341234}
-    try:
-        node = Node(
-            name="Test",
-            ip_addr='1.1.1.1',
-            mac_addr='40:6c:8f:40:98:4d',
-            user_id=3,
-        )
-        db.session.add(node)
-        db.session.commit()
-        print(node.id)
-        return node.id
-    except Exception as e:
-        log.exception(e)
 
 
 @celery.task
@@ -94,6 +25,71 @@ def test_node_task(node_id, stop=False):
         print('Stopping test')
     else:
         print('Starting test')
+
+
+@celery.task(bind=True)
+def find_nodes_task(self):
+    #
+    # nodes = find_nodes()
+    #
+    # '''
+    nodes = {
+        'a0:2b:03:c3:f3:12': {
+            'ip': '1.2.3.4',
+            'mac': 'a0:2b:03:c3:f3:12',
+            'on': True,
+        },
+        'a0:2b:03:c3:f5:12': {
+            'ip': '2.2.3.4',
+            'mac': 'a0:2b:03:c3:f5:12',
+            'on': False,
+        },
+        'a0:2b:03:c3:f4:12': {
+            'ip': '3.2.3.4',
+            'mac': 'a0:2b:03:c3:f4:12',
+            'on': True,
+        },
+    }
+    # '''
+
+    return nodes
+
+
+#######################################
+# Database calls
+#######################################
+@celery.task(bind=True)
+def add_node_task(self, node, user_id):
+    try:
+        if not node['name']:
+            raise Exception("Invalid Name")
+
+        node = Node(
+            name=node['name'],
+            ip_addr=node['ip'],
+            mac_addr=node['mac'],
+            user_id=user_id,
+        )
+        db.session.add(node)
+        db.session.commit()
+        return {'id': node.id}
+    except Exception as e:
+        log.exception(e)
+
+
+@celery.task(bind=True)
+def get_nodes_task(self):
+    nodes = Node.query.all()
+    result = {}
+    for i, node in enumerate(nodes):
+        result['id{}'.format(i)] = node.id
+    return result
+
+
+@celery.task(bind=True)
+def get_node_task(self, node_id):
+    node = Node.query.get(node_id)
+    return node.to_json()
 
 
 @celery.task
@@ -135,6 +131,17 @@ def add_rule_task(node_id, rule):
         raise
 
 
+def delete_node_task(node_id):
+    try:
+        node = Node.query.get(node_id)
+        db.session.delete(node)
+        db.session.commit()
+        return {'result': node.id}
+    except:
+        raise
+    return {'result': False}
+
+
 @celery.task
 def get_all_rules_task(node_id):
     rules = Rule.query.filter_by(node=node_id).all()
@@ -168,12 +175,3 @@ def delete_rule_task(node_id, rule_id):
     except:
         raise
     return {'result': False}
-
-
-def get_node_status_task(node_id):
-    print("Wahho testing node", node_id)
-    return {
-        'led': 1,
-        'relay': 0,
-        'motion': 1,
-    }

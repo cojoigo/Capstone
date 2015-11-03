@@ -1,7 +1,7 @@
 import logging
 
 from flask import render_template, jsonify, request
-from flask_user import login_required
+from flask_user import login_required, current_user
 from flask_user.signals import user_sent_invitation, user_registered
 
 from . import app, cache, celery, db
@@ -52,7 +52,7 @@ def nodes_jobs(job_id):
 def add_node():
     print('Beginning add node', request.json)
     node = request.json
-    job = add_node_task.delay(node)
+    job = add_node_task.delay(node, current_user.id)
     print(' - adding job', job.id)
     return job.id
 
@@ -93,13 +93,17 @@ def find_nodes(job_id):
         return 'ERROR', 202
 
 
-@app.route('/nodes/<node_id>', methods=['GET'])
+@app.route('/nodes/<node_id>', methods=['GET', 'DELETE'])
 @login_required
 def get_node(node_id):
-    print('Getting the node', node_id)
-    job = get_node_task.delay(node_id)
-    print(' - job id', job.id)
-    return job.id
+    if request.method == 'GET':
+        print('Getting the node', node_id)
+        job = get_node_task.delay(node_id)
+        print(' - job id', job.id)
+        return job.id
+    elif request.method == 'DELETE':
+        print('Deleting the node')
+        return jsonify(delete_node_task(node_id))
 
 
 @app.route('/nodes/<int:node_id>/jobs/<job_id>', methods=['GET'])

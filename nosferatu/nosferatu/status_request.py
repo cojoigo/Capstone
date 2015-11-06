@@ -25,7 +25,7 @@ def status_request(ip, status_type, send_port = 12001):
     except:
         print("Could not connect for " + status_type + " status request")
         return 3
-        
+
     try:
         print("sending status request...")
         #first = datetime.now()
@@ -33,8 +33,8 @@ def status_request(ip, status_type, send_port = 12001):
     except:
         print("Error sending status request")
         return 4
-            
-    
+
+
     # If no status has been received within 3 seconds, assume connection is dead
     sender.settimeout(3)
     try:
@@ -43,11 +43,11 @@ def status_request(ip, status_type, send_port = 12001):
         #second = datetime.now()
     except:
         print("Waiting for status reply timed out")
-        return "3"
+        return 3
 
     sender.shutdown( SHUT_RDWR )
     sender.close()
-    
+
     #print("heard \"" + status + "\"")
     #print( str(second-first) )
 

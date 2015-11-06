@@ -14,35 +14,45 @@ log = logging.getLogger()
 def get_node_status_task(node_id):
 
     print("Wahho testing node", node_id)
-    
-    '''
+
+
     node = Node.query.filter_by(id=node_id).first()
     ip_str = str(node.ip_addr)
-    
+# TODO change to one call and parse
     led_status = status_request( ip_str, "LED" )
     relay_status = status_request( ip_str, "MOTION" )
     motion_status = status_request( ip_str, "RELAY" )
-    
-    #Status will be a number: 
+
+    #Status will be a number:
     ## 0 == status OFF
     ## 1 == status ON
     ## 2 == Error establishing TCP connection to node
     ## 3 == Error sending status request packet
     ## 4 == Waiting for status reply timed out
-    ## 5 == Received unknown status from node 
+    ## 5 == Received unknown status from node
+
+    mapSting = {
+        0: 'Off',
+        1: 'On',
+        2: 'Erroar',
+        3: 'Erroar',
+        4: 'Erroar',
+        5: 'Erroar',
+    }
 
     return {
-        'led': led_status,
-        'relay': relay_status,
-        'motion': motion_status,
+        'led': mapSting[led_status],
+        'relay': mapSting[relay_status],
+        'motion': mapSting[motion_status],
     }
-    '''
 
+    '''
     return {
         'led': 1,
         'relay': 0,
         'motion': 1,
     }
+    '''
 
 @celery.task
 def test_node_task(node_id, stop=False):
@@ -54,10 +64,10 @@ def test_node_task(node_id, stop=False):
 
 @celery.task(bind=True)
 def find_nodes_task(self):
-    #
-    # nodes = find_nodes()
-    #
-    # '''
+
+    nodes = find_nodes()
+
+    '''
     nodes = {
         'a0:2b:03:c3:f3:12': {
             'ip': '1.2.3.4',
@@ -75,7 +85,7 @@ def find_nodes_task(self):
             'on': True,
         },
     }
-    # '''
+    '''
 
     return nodes
 

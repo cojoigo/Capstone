@@ -1,10 +1,11 @@
 import subprocess
-import pprint 
+import pprint
 from . import cache, celery, db
 from .models import Node
+from .node_auth import *
 
 def find_nodes():
-    
+
     # Get list of IP/MAC pairs currently on network
     arp = subprocess.check_output("arp").decode()
     arp = arp.replace("\n", " ")
@@ -26,7 +27,7 @@ def find_nodes():
     changed_nodes = []
 
     # TODO Used as example because VM does not have wifi network
-    devices.append(["192.168.42.100", "9c:d9:17:62:65:62"])
+    #devices.append(["192.168.42.100", "9c:d9:17:62:65:62"])
 
     # Compare devices on network with nodes already in DB
     found = False
@@ -74,5 +75,5 @@ def find_nodes():
     # Known MACs with different IPs -> update DB with new IPs
     # TODO: Add contents of changed_nodes to DB
     # Look in tasks.py for a DB write example
-    
+
     return formatted_unknown_nodes

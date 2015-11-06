@@ -643,6 +643,7 @@
                                 $log.log(" - ", results.data)
                                 date = new Date()
                                 self.lastUpdate = date.toLocaleString()
+                                self.relayStatus = results.data.relay
 
                             # Continue to call the poller every 2 seconds until its canceled
                             time = $timeout(poller, 5000)

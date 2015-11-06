@@ -18,10 +18,17 @@ def get_node_status_task(node_id):
 
     node = Node.query.filter_by(id=node_id).first()
     ip_str = str(node.ip_addr)
-# TODO change to one call and parse
-    led_status = status_request( ip_str, "LED" )
-    relay_status = status_request( ip_str, "MOTION" )
-    motion_status = status_request( ip_str, "RELAY" )
+
+    status = status_request( ip_str, "ALL" ).split("&")
+
+    while len(status) < 3:
+        status.append(6)
+        # Error in status reply. Should be "status&status&status"
+
+    
+    led_status = status[0]
+    relay_status = status[1]
+    motion_status = status[2]
 
     #Status will be a number:
     ## 0 == status OFF
@@ -31,7 +38,7 @@ def get_node_status_task(node_id):
     ## 4 == Waiting for status reply timed out
     ## 5 == Received unknown status from node
 
-    mapSting = {
+    mapString = {
         0: 'Off',
         1: 'On',
         2: 'Erroar',
@@ -41,9 +48,9 @@ def get_node_status_task(node_id):
     }
 
     return {
-        'led': mapSting[led_status],
-        'relay': mapSting[relay_status],
-        'motion': mapSting[motion_status],
+        'led': mapString[led_status],
+        'relay': mapString[relay_status],
+        'motion': mapString[motion_status],
     }
 
     '''

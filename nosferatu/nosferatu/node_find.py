@@ -3,6 +3,7 @@ import pprint
 from . import cache, celery, db
 from .models import Node
 from .node_auth import *
+from .node_lock import *
 
 def find_nodes():
 
@@ -65,9 +66,15 @@ def find_nodes():
     formatted_unknown_nodes = {}
 
     for node in unknown_nodes:
+
+        # TODO lock before auth
+        #acquire_lock( node[0] )
         status = node_auth( node[0] )
+        #release_lock( node[0] )
+
         if status.strip(' \t\r\n') == "N0$fEr@tU":
             formatted_unknown_nodes[ node[1] ] =  {'ip': node[0], 'mac': node[1]}
+
 
     print("\nFormatted")
     pprint.pprint(formatted_unknown_nodes)

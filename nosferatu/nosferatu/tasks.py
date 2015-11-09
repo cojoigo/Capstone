@@ -1,5 +1,6 @@
 import logging
 
+from .node_lock import *
 from . import cache, celery, db
 from .models import Node, Rule
 from .node_find import find_nodes
@@ -18,7 +19,9 @@ def get_node_status_task(node_id):
 
     node = Node.query.filter_by(id=node_id).first()
     ip_str = str(node.ip_addr)
+    mac = str( node.mac_addr )
 
+    @task_lock( key=str(node_id), timeout = 15 )
     status = status_request( ip_str, "ALL" ).split("&")
 
     while len(status) < 3:

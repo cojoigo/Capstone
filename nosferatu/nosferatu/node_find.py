@@ -67,10 +67,8 @@ def find_nodes():
 
     for node in unknown_nodes:
 
-        # TODO lock before auth
-        #acquire_lock( node[0] )
-        status = node_auth( node[0] )
-        #release_lock( node[0] )
+        with task_lock( key = node[1], timeout = 15 ):
+            status = node_auth( node[0] )
 
         if status.strip(' \t\r\n') == "N0$fEr@tU":
             formatted_unknown_nodes[ node[1] ] =  {'ip': node[0], 'mac': node[1]}

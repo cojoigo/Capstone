@@ -51,7 +51,7 @@ def status_request(ip, status_type, send_port = 12001):
     #print("heard \"" + status + "\"")
     #print( str(second-first) )
     
-    if status_type == "ALL"
+    if status_type == "ALL":
         return status
     
     if status == "OFF":

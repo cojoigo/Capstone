@@ -21,7 +21,7 @@ def get_node_status_task(node_id):
     ip_str = str(node.ip_addr)
     mac = str( node.mac_addr )
 
-    with task_lock( key=str(node_id), timeout = 15 ):
+    with task_lock( key = mac, timeout = 15 ):
         status = status_request( ip_str, "ALL" ).split("&")
 
     while len(status) < 3:

@@ -2,7 +2,7 @@ from socket import *
 import sys
 from datetime import *
 
-# This script sends a message to a specific node, to change its status 
+# This script sends a message to a specific node, to change its status
 # It can be used to change the state of the LED, Relay, or Motion Sensor
 
 
@@ -14,13 +14,6 @@ def change_status( node_ip, request_type, status, send_port = 12001 ):
     else:
         print("invalid node for status change " + request_type)
         return 1
-
-    if status == "ON" or status == "OFF":
-        #print("Good status")
-        pass
-    else:
-        print("Invalid status for status change " + request_type)
-        return 2
 
     addr = (node_ip, send_port)
     sender = socket(AF_INET, SOCK_STREAM)
@@ -36,7 +29,7 @@ def change_status( node_ip, request_type, status, send_port = 12001 ):
         sender.send( (request_type + "&" + status + ".").encode() )
     except:
         print("Could not send message")
-        raise
+        return 4
 
 
     sender.settimeout(3)
@@ -45,7 +38,7 @@ def change_status( node_ip, request_type, status, send_port = 12001 ):
     except:
         print("Waiting for message timed out")
         return 5
-    
+
     sender.shutdown( SHUT_RDWR )
     sender.close()
 

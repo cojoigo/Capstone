@@ -98,6 +98,16 @@ def find_nodes_task(self):
 
     return nodes
 
+def toggle_status_task(node_id):
+
+    node = Node.query.filter_by(id=node_id).first()
+
+    ip_str = str(node.ip_addr)
+    mac = str( node.mac_addr )
+
+    with task_lock( key = mac, timeout = 15 ):
+        status = status_change( ip_str, "RELAY", "TOGGLE" )
+
 
 #######################################
 # Database calls

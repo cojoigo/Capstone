@@ -25,10 +25,10 @@ def get_node_status_task(node_id):
         status = status_request( ip_str, "ALL" ).split("&")
 
     while len(status) < 3:
-        status.append(6)
+        status.append('5')
         # Error in status reply. Should be "status&status&status"
 
-    
+
     led_status = status[0]
     relay_status = status[1]
     motion_status = status[2]
@@ -42,12 +42,12 @@ def get_node_status_task(node_id):
     ## 5 == Received unknown status from node
 
     mapString = {
-        0: 'Off',
-        1: 'On',
-        2: 'Erroar',
-        3: 'Erroar',
-        4: 'Erroar',
-        5: 'Erroar',
+        '0': 'Off',
+        '1': 'On',
+        '2': 'Erroar',
+        '3': 'Erroar',
+        '4': 'Erroar',
+        '5': 'Erroar',
     }
 
     return {
@@ -196,6 +196,7 @@ def get_all_rules_task(node_id):
         for i, rule in enumerate(rules):
             result['id{}'.format(i)] = rule.id
         return result
+    return {}
 
 
 @celery.task

@@ -12,7 +12,7 @@ def task_lock( key="", timeout=15 ):
         print("Waiting to lock node " + key )
         have_lock = lock.acquire( blocking=True )
         print("Lock acquired on " + key )
-                    
+
         if have_lock:
             yield
 

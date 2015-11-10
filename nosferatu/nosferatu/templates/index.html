@@ -69,6 +69,10 @@
                 <button type="button" class="btn btn-default" ng-click="settings.toggle()">
                   Toggle
                 </button>
+                <br />
+                <input type="checkbox" ng-click="settings.change_motion()">
+                Motion Status (actual {[settings.motion_status]})
+                </button>
               </div>
               <div class="small-4 columns">
                 <button type="button" class="btn btn-default" ng-click="settings.delete(main.nodes)">

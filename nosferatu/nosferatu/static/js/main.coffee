@@ -537,6 +537,7 @@
             @rules = {}
             @addedRules = []
             @deleted = false
+            @motion_status = 'Off'
 
             $scope.$watchCollection(
                 angular.bind(this, () -> return @addedRules),
@@ -576,6 +577,23 @@
                 $http.post("/nodes/#{self.node.id}/toggle").then(
                     ((results) ->
                         $log.log(' - toggled successfully', results.data)
+                    ), errFunc
+                )
+
+            @change_motion = () ->
+                $log.log("Changing motion setting, #{self.node.id}")
+
+                if self.motion_status is 'Off'
+                    status = 'On'
+                else
+                    status = 'Off'
+
+                data = {
+                    'motion': status,
+                }
+                $http.post("/nodes/#{self.node.id}/motion", data).then(
+                    ((results) ->
+                        $log.log("Motion should be changed")
                     ), errFunc
                 )
 
@@ -654,6 +672,7 @@
                                 if results.data.relay != 'Error'
                                     date = new Date()
                                     self.lastUpdate = date.toLocaleString()
+                                    self.motion_status = results.data.motion
 
                             # Continue to call the poller every 2 seconds until its canceled
                             time = $timeout(poller, 5000)

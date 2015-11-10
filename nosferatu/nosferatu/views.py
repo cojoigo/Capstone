@@ -134,6 +134,13 @@ def test_stop(node_id):
     return 'SUCCESS', 200
 
 
+@app.route('/nodes/<node_id>/motion', methods=['POST'])
+@login_required
+def change_node_motion(node_id):
+    toggle_node_task.delay(node_id, request.json)
+    return 'SUCCESS', 200
+
+
 @app.route('/nodes/<node_id>/toggle', methods=['POST'])
 @login_required
 def toggle_node(node_id):

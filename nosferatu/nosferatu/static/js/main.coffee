@@ -668,7 +668,7 @@
                                 $log.log("  - failed:", results.data)
                             else if results.status == 200
                                 $log.log(" - ", results.data)
-                                self.relayStatus = results.data.relay
+                                self.relayStatus = results.data.led
                                 if results.data.relay != 'Error'
                                     date = new Date()
                                     self.lastUpdate = date.toLocaleString()

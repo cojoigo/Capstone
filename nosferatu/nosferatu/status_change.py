@@ -6,7 +6,7 @@ from datetime import *
 # It can be used to change the state of the LED, Relay, or Motion Sensor
 
 
-def change_status( node_ip, request_type, status, send_port = 12001 ):
+def status_change( node_ip, request_type, status, send_port = 12001 ):
 
     if "192.168" in node_ip:
         #print("Good node")

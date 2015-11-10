@@ -29,14 +29,14 @@ def status_request(ip, status_type, send_port = 12001):
     try:
         print("sending status request...")
         #first = datetime.now()
-        sender.sendall( (status_type + "&STATUS.").encode() )
+        sender.sendall( ( "STATUS&" + status_type  + "." ).encode() )
     except:
         print("Error sending status request")
         return "4"
 
 
     # If no status has been received within 3 seconds, assume connection is dead
-    sender.settimeout(3)
+    sender.settimeout(5)
     try:
         print("listening for status...")
         status = sender.recv(1024).decode()

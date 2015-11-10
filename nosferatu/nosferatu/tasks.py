@@ -29,8 +29,8 @@ def get_node_status_task(node_id):
 
 
     led_status = status[0]
-    relay_status = status[1]
-    motion_status = status[2]
+    motion_status = status[1]
+    relay_status = status[2]
 
     #Status will be a number:
     ## 0 == status OFF
@@ -41,6 +41,8 @@ def get_node_status_task(node_id):
     ## 5 == Received unknown status from node
 
     mapString = {
+        'ON' : 'On',
+        'OFF': 'Off',
         '0': 'Off',
         '1': 'On',
         '2': 'Erroar',
@@ -98,14 +100,14 @@ def find_nodes_task(self):
 
     return nodes
 
-def toggle_status_task(node_id):
+def toggle_node_task(node_id):
     node = Node.query.filter_by(id=node_id).first()
 
     ip_str = str(node.ip_addr)
     mac = str( node.mac_addr )
 
     with task_lock( key = mac, timeout = 15 ):
-        status = status_change( ip_str, "RELAY", "TOGGLE" )
+        status = status_change( ip_str, "LED", "TOGGLE" )
 
 
 def change_motion_task(node_id, status):
@@ -114,7 +116,7 @@ def change_motion_task(node_id, status):
     ip_str = str(node.ip_addr)
     mac = str(node.mac_addr)
 
-    status = status.upper()
+    status = status['motion'].upper()
 
     with task_lock(key=mac, timeout = 15):
         status = status_change(ip_str, "MOTION", status)

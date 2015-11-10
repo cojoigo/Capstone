@@ -134,6 +134,13 @@ def test_stop(node_id):
     return 'SUCCESS', 200
 
 
+@app.route('/nodes/<node_id>/toggle', methods=['POST'])
+@login_required
+def toggle_node(node_id):
+    toggle_node_task.delay(node_id)
+    return 'SUCCESS', 200
+
+
 @app.route('/nodes/<int:node_id>/status', methods=['GET'])
 @login_required
 def get_node_status(node_id):

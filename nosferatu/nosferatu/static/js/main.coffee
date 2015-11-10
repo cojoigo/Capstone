@@ -557,7 +557,7 @@
             )
 
             @delete = (nodes) ->
-                $log.log("Deleting rule #{self.node.id}")
+                $log.log("Toggling the node! #{self.node.id}")
 
                 $http.delete("/nodes/#{self.node.id}").then(
                     ((results) ->
@@ -567,6 +567,15 @@
                         self.deleted = true
 
                         $log.log(' - new rules, ', nodes)
+                    ), errFunc
+                )
+
+            @toggle = () ->
+                $log.log("Toggling the node status #{self.node.id}")
+
+                $http.post("/nodes/#{self.node.id}/toggle").then(
+                    ((results) ->
+                        $log.log(' - toggled successfully', results.data)
                     ), errFunc
                 )
 
@@ -641,9 +650,10 @@
                                 $log.log("  - failed:", results.data)
                             else if results.status == 200
                                 $log.log(" - ", results.data)
-                                date = new Date()
-                                self.lastUpdate = date.toLocaleString()
                                 self.relayStatus = results.data.relay
+                                if results.data.relay != 'Error'
+                                    date = new Date()
+                                    self.lastUpdate = date.toLocaleString()
 
                             # Continue to call the poller every 2 seconds until its canceled
                             time = $timeout(poller, 5000)

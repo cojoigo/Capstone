@@ -13,7 +13,6 @@ log = logging.getLogger()
 # Direct Node Communication
 #######################################
 def get_node_status_task(node_id):
-
     print("Wahho testing node", node_id)
 
 

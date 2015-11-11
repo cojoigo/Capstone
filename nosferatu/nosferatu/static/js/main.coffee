@@ -33,7 +33,20 @@
         $interpolateProvider.startSymbol('{[')
         $interpolateProvider.endSymbol(']}')
     ])
-    app.directive('foundNode', () ->
+    .filter('notthesame', () ->
+        return (input, rselect) ->
+            if not input?
+                return input
+            if not rselect?
+                return input
+            result = []
+            angular.forEach(input, (value) ->
+                if value.name? and value.name isnt rselect.node.name
+                    result.push(value)
+            )
+            return result
+    )
+    .directive('foundNode', () ->
         template = '<div ng-transclude></div>'
 
         controller = ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
@@ -201,6 +214,13 @@
                 else
                     @ruleTurnOnStr = 'Off'
 
+            @foreignNode = @foreignNodes[0]
+            @foreignNodeStatus = 'Is On'
+
+            @eventNode = (node) ->
+                $log.log(" - node from node name", node)
+                return node.id
+
             @addRule = (real) ->
                 if not real?
                     return
@@ -211,7 +231,7 @@
                     'type': @ruleType
                     'turn_on': @ruleTurnOn
                     'days': @daysOfWeekSelected
-                    'schedule_type': @scheduleTimeType
+                    'sched_type': @scheduleTimeType
 
                     # manual
                     'hour': @hoursInDay[@hourInDay]
@@ -220,8 +240,12 @@
                     # auto
                     'zip_code': @scheduleZipCode or ''
                     'time_of_day': @scheduleTimeOfDayType
+
+                    'event_node': @eventNode(self.foreignNode)
+                    'event_node_status': self.foreignNodeStatus
                 }
 
+                return
                 $http.post("/nodes/#{@node.id}/rules", data).then(
                     ((results) ->
                         $log.log(" - job: #{results.data}")
@@ -274,6 +298,7 @@
         ]
         return {
             bindToController: {
+                foreignNodes: '='
                 node: '='
                 addedRules: '='
 
@@ -680,7 +705,7 @@
                         ), errFunc
                     )
                 poller()
-            @checkNodeStatus()
+            # @checkNodeStatus()
 
             return
         ]

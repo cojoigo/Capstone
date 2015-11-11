@@ -65,10 +65,6 @@ class Rule(db.Model):
     sched_zip_code = db.Column(db.Integer)
     sched_time_of_day = db.Column(db.String(56))
 
-    # Events
-    event_node = db.Column(db.Integer, ForeignKey('nodes.id'))
-    event_node_state = db.Column(db.Integer, ForeignKey('nodes.id'))
-
     # Parent Node
     node = db.Column(db.Integer, ForeignKey('nodes.id'))
 

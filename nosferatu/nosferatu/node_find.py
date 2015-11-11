@@ -27,9 +27,6 @@ def find_nodes():
     unknown_nodes = []
     changed_nodes = []
 
-    # TODO Used as example because VM does not have wifi network
-    #devices.append(["192.168.42.100", "9c:d9:17:62:65:62"])
-
     # Compare devices on network with nodes already in DB
     found = False
     for device in devices:
@@ -48,20 +45,6 @@ def find_nodes():
         if found is False:
             unknown_nodes.append(device)
 
-    # TODO: Remove debug printing
-    #print("known")
-    #print(known_nodes)
-    #print()
-    #print("unknown")
-    #print(unknown_nodes)
-    #print()
-    #print("changed")
-    #print(changed_nodes)
-
-    # TODO: What to do with nodes in Database that are no longer on the network?
-    #       - Remove them from the DB
-    #       - Keep them in the DB in case they were temporarily disconnected
-
     # Authenticate and format nodes found on the network that are not in DB as a dict, to show to user
     formatted_unknown_nodes = {}
 
@@ -74,11 +57,7 @@ def find_nodes():
             formatted_unknown_nodes[ node[1] ] =  {'ip': node[0], 'mac': node[1]}
 
 
-    print("\nFormatted")
+    print("\nFound and Auth'ed:")
     pprint.pprint(formatted_unknown_nodes)
-
-    # Known MACs with different IPs -> update DB with new IPs
-    # TODO: Add contents of changed_nodes to DB
-    # Look in tasks.py for a DB write example
 
     return formatted_unknown_nodes

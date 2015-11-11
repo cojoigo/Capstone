@@ -12,7 +12,7 @@ def status_change( node_ip, request_type, status, send_port = 12001 ):
         #print("Good node")
         pass
     else:
-        print("invalid node for status change " + request_type)
+        print(node_ip + ": Invalid node for status change " + request_type)
         return 1
 
     addr = (node_ip, send_port)
@@ -20,15 +20,14 @@ def status_change( node_ip, request_type, status, send_port = 12001 ):
 
     try:
         sender.connect(addr)
-        #sendtime = datetime.now()
     except:
-        print("Could not connect to change status of " + request_type)
+        print("Could not connect to " + node_ip + " to change status of " + request_type)
         return 3
 
     try:
         sender.send( (request_type + "&" + status + ".").encode() )
     except:
-        print("Could not send message")
+        print("Could not send message to " + node_ip)
         return 4
 
 
@@ -36,16 +35,10 @@ def status_change( node_ip, request_type, status, send_port = 12001 ):
     try:
         status = sender.recv(1024).decode()
     except:
-        print("Waiting for message timed out")
+        print("Waiting for message timed out on " + node_ip)
         return 5
 
     sender.shutdown( SHUT_RDWR )
     sender.close()
-
-    #recvtime = datetime.now()
-
-    #print("Roundtrip time " + str(recvtime-sendtime))
-
-    #print(status)
 
     return status

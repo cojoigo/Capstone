@@ -9,15 +9,17 @@ def task_lock( key="", timeout=15 ):
 
     lock = REDIS_CLIENT.lock( key, timeout = timeout )
     try:
-        print("Waiting to lock node " + key )
+        #print("Waiting to lock node " + key )
         have_lock = lock.acquire( blocking=True )
-        print("Lock acquired on " + key )
+        #print("Lock acquired on " + key )
 
         if have_lock:
             yield
 
     finally:
-        if have_lock:
-            lock.release()
-            print("Released lock on " + key )
-
+        try:
+            if have_lock:
+                lock.release()
+                #print("Released lock on " + key )
+        except:
+            pass

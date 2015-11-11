@@ -13,43 +13,36 @@ def status_request(ip, status_type, send_port = 12001):
         #print("Good IP")
         pass
     else:
-        print("Bad IP for status request " + status_type)
+        print(ip + ": Bad IP for status request " + status_type)
         return "2"
 
     sender = socket(AF_INET, SOCK_STREAM)
     addr=(ip, send_port)
 
     try:
-        print("Trying to connect for " + status_type + " status request")
         sender.connect(addr)
     except:
-        print("Could not connect for " + status_type + " status request")
+        print("Could not connect to " + ip + " for " + status_type + " status request")
         return "3"
 
     try:
-        print("sending status request...")
-        #first = datetime.now()
         sender.sendall( ( "STATUS&" + status_type  + "." ).encode() )
     except:
-        print("Error sending status request")
+        print("Error sending status request to " + ip)
         return "4"
 
 
     # If no status has been received within 3 seconds, assume connection is dead
     sender.settimeout(5)
     try:
-        print("listening for status...")
         status = sender.recv(1024).decode()
         #second = datetime.now()
     except:
-        print("Waiting for status reply timed out")
+        print("Waiting for status reply timed out on " + ip)
         return "5"
 
     sender.shutdown( SHUT_RDWR )
     sender.close()
-
-    #print("heard \"" + status + "\"")
-    #print( str(second-first) )
 
     if status_type == "ALL":
         return status

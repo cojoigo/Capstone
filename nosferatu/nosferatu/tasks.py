@@ -13,15 +13,12 @@ log = logging.getLogger()
 # Direct Node Communication
 #######################################
 def get_node_status_task(node_id):
-    print("Wahho testing node", node_id)
-
-
     node = Node.query.filter_by(id=node_id).first()
     ip_str = str(node.ip_addr)
     mac = str( node.mac_addr )
 
     with task_lock( key = mac, timeout = 15 ):
-        status = status_request( ip_str, "ALL" ).split("&")
+        status = status_request( ip_str, "ALL" ).strip(' \t\r\n').split("&")
 
     while len(status) < 3:
         status.append('5')
@@ -58,14 +55,6 @@ def get_node_status_task(node_id):
         'relay': mapString[relay_status],
         'motion': mapString[motion_status],
     }
-
-    '''
-    return {
-        'led': 1,
-        'relay': 0,
-        'motion': 1,
-    }
-    '''
 
 @celery.task
 def test_node_task(node_id, stop=False):

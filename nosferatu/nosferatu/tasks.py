@@ -9,6 +9,16 @@ log = logging.getLogger()
 
 
 #######################################
+# Rules Poll
+#######################################
+@celery.task
+def rules_poll():
+    rules = Rule.query.filter_by(type='Event')
+    for rule in rules:
+        print(rule.name)
+
+
+#######################################
 # Direct Node Communication
 #######################################
 def get_node_status_task(node_id):
@@ -47,7 +57,6 @@ def test_node_task(node_id, stop=False):
 
     with task_lock(key=mac, timeout=15):
         change_node_status(ip_str, "TEST", test)
-
 
 @celery.task(bind=True)
 def find_nodes_task(self):
@@ -145,25 +154,30 @@ def add_rule_task(node_id, rule):
 
     try:
         # Validate the zipcode
-        zip_code = rule['zip_code']
-        for digit in zip_code:
-            try:
-                int(digit)
-            except ValueError:
+        zip_code = rule.get('zip_code')
+        if zip_code is not None:
+            for digit in zip_code:
+                try:
+                    int(digit)
+                except ValueError:
+                    zip_code = 0
+            if not zip_code:
                 zip_code = 0
-        if not zip_code:
-            zip_code = 0
 
         rule = Rule(
             name=rule['name'],
             type=rule['type'],
             turn_on=rule['turn_on'],
             days='.'.join(rule['days']),
-            schedule_type=rule['schedule_type'],
-            hour=rule['hour'],
-            minute=rule['minute'],
-            zip_code=zip_code,
-            time_of_day=rule['time_of_day'],
+
+            sched_type=rule.get('sched_type'),
+            sched_hour=rule.get('hour'),
+            sched_minute=rule.ge('minute'),
+            sched_zip_code=zip_code,
+            sched_time_of_day=rule.get('time_of_day'),
+
+            event_node=rule.get('event_node'),
+            event_node_status=rule.get('event_node_status'),
 
             node=node_id,
         )

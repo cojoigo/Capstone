@@ -5,6 +5,7 @@ nosferatu/instance/
 nosferatu/nosferatu/static/public/
 nosferatu/nosferatu/static/.webassets-cache/
 nosferatu/static/public/
+nosferatu/celerybeat-schedule
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -55,16 +55,21 @@ class Rule(db.Model):
     days = db.Column(db.String(56), nullable=False)
 
     # Schedules
-    schedule_type = db.Column(db.String(56), nullable=False)
+    sched_type = db.Column(db.String(56), nullable=False)
 
     # - Manual
-    hour = db.Column(db.Integer)
-    minute = db.Column(db.Integer)
+    sched_hour = db.Column(db.Integer)
+    sched_minute = db.Column(db.Integer)
 
     # - Auto
-    zip_code = db.Column(db.Integer)
-    time_of_day = db.Column(db.String(56))
+    sched_zip_code = db.Column(db.Integer)
+    sched_time_of_day = db.Column(db.String(56))
 
+    # Events
+    event_node = db.Column(db.Integer, ForeignKey('nodes.id'))
+    event_node_state = db.Column(db.Integer, ForeignKey('nodes.id'))
+
+    # Parent Node
     node = db.Column(db.Integer, ForeignKey('nodes.id'))
 
     def __init__(self, **kwargs):

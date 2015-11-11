@@ -27,6 +27,8 @@ def get_node_status_task(node_id):
         status.append('5')
         # Error in status reply. Should be "status&status&status"
 
+    for i in range(0, 3):
+        db_update_status( node_id, i, status[i] )
 
     led_status = status[0]
     motion_status = status[1]
@@ -115,7 +117,9 @@ def toggle_node_task(node_id):
     mac = str( node.mac_addr )
 
     with task_lock( key = mac, timeout = 15 ):
-        status = status_change( ip_str, "LED", "TOGGLE" )
+        status = status_change( ip_str, "RELAY", "TOGGLE" )
+
+    db_update_status( node_id, 3, status )
 
 
 def change_motion_task(node_id, status):
@@ -127,7 +131,9 @@ def change_motion_task(node_id, status):
     status = status['motion'].upper()
 
     with task_lock(key=mac, timeout = 15):
-        status = status_change(ip_str, "MOTION", status)
+        status_reply = status_change(ip_str, "MOTION", status)
+
+    db_update_status( node_id, 2, status_reply )
 
 #######################################
 # Database calls
@@ -250,3 +256,23 @@ def delete_rule_task(node_id, rule_id):
     except:
         raise
     return {'result': False}
+
+def db_update_status( node_id, status_type, status ):
+    if status_type == 0 or status_type == 1:
+        return
+        #TODO LED and Motion not yet implemented
+
+    if status == "ON":
+        current = True
+    elif status == "OFF":
+        current = False
+    else:
+        return
+
+    node = Node.query.filter_by(id=node_id).first()
+    node.relay_status = current
+    db.session.commit()
+
+    return
+
+

@@ -15,6 +15,8 @@ class Node(db.Model):
     name = db.Column(db.String(35), nullable=False)
     ip_addr = db.Column(postgresql.INET)
 
+    relay_status = db.Column(db.Boolean, default=False)
+
     user_id = db.Column(db.Integer, ForeignKey('users.id'))
     rules = relationship('Rule', backref='nodes')
 
@@ -33,6 +35,7 @@ class Node(db.Model):
             'mac': self.mac_addr,
             'name': self.name,
             'ip_addr': self.ip_addr,
+            'relay_status': self.relay_status,
         }
 
 

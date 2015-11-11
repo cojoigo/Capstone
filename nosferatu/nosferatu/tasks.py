@@ -14,9 +14,28 @@ log = logging.getLogger()
 @celery.task
 def rules_poll():
     rules = Rule.query.filter_by(type='Event')
-    for rule in rules:
-        print(rule.name)
+    ids = []
 
+    for rule in rules:
+        ids.append(rule.event_node)
+
+    nodes = Node.query.filter_by(id.in_(ids))
+    for node in nodes:
+        node_info[node.id] = (nodes.status, node.ip_addr, node.mac_addr)
+
+    for r in rules:
+        node = node_info[r.eventNode]
+        if node[0] == r.event_node_state:
+            ip_str = str(node[1])
+            mac_str = str(node[2])
+
+            if r.turn_on:
+                with task_lock( key = mac, timeout = 15 ):
+                    status = status_change( ip_str, "RELAY", "ON" )
+
+            if !r.turn_on:
+                with task_lock(key = mac, timeout = 15 ):
+                    status = status_change( ip_str, "RELAY", "OFF")
 
 #######################################
 # Direct Node Communication

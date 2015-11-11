@@ -66,8 +66,8 @@ class Rule(db.Model):
     sched_time_of_day = db.Column(db.String(56))
 
     # Events
-    event_node = db.Column(db.Integer, ForeignKey('nodes.id'))
-    event_node_state = db.Column(db.Integer, ForeignKey('nodes.id'))
+    event_node = db.Column(db.Integer, ForeignKey('nodes.id'), nullable=True)
+    event_node_state = db.Column(db.Boolean, default=False)
 
     # Parent Node
     node = db.Column(db.Integer, ForeignKey('nodes.id'))

@@ -68,9 +68,17 @@ def get_node_status_task(node_id):
 @celery.task
 def test_node_task(node_id, stop=False):
     if stop:
-        print('Stopping test')
+        test = 'ON'
     else:
-        print('Starting test')
+        test = 'OFF'
+
+    node = Node.query.filter_by(id=node_id).first()
+
+    ip_str = str(node.ip_addr)
+    mac = str( node.mac_addr )
+
+    with task_lock( key = mac, timeout = 15 ):
+        status = status_change( ip_str, "TEST", test )
 
 
 @celery.task(bind=True)

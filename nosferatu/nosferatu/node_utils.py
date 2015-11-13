@@ -8,6 +8,18 @@ from .task_lock import task_lock
 DEFAULT_SEND_PORT = 12001
 
 
+class BadIpException(Exception):
+    pass
+
+
+class CommunicationException(Exception):
+    pass
+
+
+class BadStatusException(Exception):
+    pass
+
+
 def node_auth(ip, send_port=DEFAULT_SEND_PORT):
     """Connect to a device through TCP and attempts to authenticate it.
     """
@@ -141,49 +153,47 @@ def change_node_status(node_ip, request_type, status, send_port=DEFAULT_SEND_POR
     return status
 
 
-def get_node_status(ip, status_type, send_port=DEFAULT_SEND_PORT):
+def get_node_status(ip, status_type="ALL", send_port=DEFAULT_SEND_PORT):
     """Send a message to a known node to request a status.
 
     This can be used for the status of the node LED, relay, and motion sensor.
     """
-    if "192.168" in ip:
-        pass
-    else:
-        print("{}: Bad IP for status request {}".format(ip, status_type))
-        return "2"
+    if '192.168' not in ip:
+        raise BadIpException('{}: Bad IP for status request {}'.format(ip, status_type))
 
-    sender = socket(AF_INET, SOCK_STREAM)
     addr = (ip, send_port)
+    sender = socket(AF_INET, SOCK_STREAM)
+    sender.settimeout(5)
 
     try:
         sender.connect(addr)
     except:
-        print("Could not connect to {} for {} status request".format(ip, status_type))
-        return "3"
+        raise CommunicationException(
+            'Could not connect to {} for {} status request'.format(ip, status_type)
+        )
 
     try:
-        sender.sendall(("STATUS&{}.".format(status_type)).encode())
+        sender.sendall(('STATUS&{}.'.format(status_type)).encode())
     except:
-        print("Error sending status request to {}".format(ip))
-        return "4"
+        raise CommunicationException('Error sending status request to {}'.format(ip))
 
-    # If no status has been received within 3 seconds, assume connection is dead
-    sender.settimeout(5)
     try:
         status = sender.recv(1024).decode()
     except:
-        print("Waiting for status reply timed out on {}".format(ip))
-        return "5"
+        raise CommunicationException('Waiting for status reply timed out on {}'.format(ip))
 
     sender.shutdown(SHUT_RDWR)
     sender.close()
 
-    if status_type == "ALL":
-        return status
-
-    if status == "OFF":
-        return "0"
-    elif status == "ON":
-        return "1"
+    if status_type == 'ALL':
+        result = tuple(status.title() for status in status.split('&'))
+        assert(len(result) == 3)
+        return result
     else:
-        return "5"
+        if status == 'OFF':
+            return 'Off'
+        elif status == 'ON':
+            return 'On'
+        else:
+            raise BadStatusException('Unexpected status: {}', status)
+

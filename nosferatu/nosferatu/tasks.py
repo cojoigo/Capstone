@@ -17,42 +17,19 @@ def get_node_status_task(node_id):
     mac = str(node.mac_addr)
 
     with task_lock(key=mac, timeout=15):
-        status = get_node_status(ip_str, "ALL").strip(' \t\r\n').split("&")
+        try:
+            status = get_node_status(ip_str).strip(' \t\r\n').split("&")
+        except (BadIpException, CommunicationException, BadStatusException) as e:
+            print(e.message)
+            status = ('Erroar', 'Erroar', 'Erroar')
 
-    while len(status) < 3:
-        status.append('5')
-        # Error in status reply. Should be "status&status&status"
-
-    for i in range(0, 3):
-        db_update_status(node_id, i, status[i])
-
-    led_status = status[0]
-    motion_status = status[1]
-    relay_status = status[2]
-
-    # Status will be a number:
-    # 0 == status OFF
-    # 1 == status ON
-    # 2 == Error establishing TCP connection to node
-    # 3 == Error sending status request packet
-    # 4 == Waiting for status reply timed out
-    # 5 == Received unknown status from node
-
-    mapString = {
-        'ON': 'On',
-        'OFF': 'Off',
-        '0': 'Off',
-        '1': 'On',
-        '2': 'Erroar',
-        '3': 'Erroar',
-        '4': 'Erroar',
-        '5': 'Erroar',
-    }
+    led_status, motion_status, relay_status = status
+    db_update_relay(node_id, relay_status)
 
     return {
-        'led': mapString[led_status],
-        'relay': mapString[relay_status],
-        'motion': mapString[motion_status],
+        'led': led_status,
+        'relay': relay_status,
+        'motion': motion_status,
     }
 
 
@@ -108,7 +85,7 @@ def toggle_node_task(node_id):
     with task_lock(key=mac, timeout=15):
         status = change_node_status(ip_str, "RELAY", "TOGGLE")
 
-    db_update_status(node_id, 3, status)
+    db_update_relay(node_id, status)
 
 
 def change_motion_task(node_id, status):
@@ -122,7 +99,7 @@ def change_motion_task(node_id, status):
     with task_lock(key=mac, timeout=15):
         status_reply = change_node_status(ip_str, "MOTION", status)
 
-    db_update_status(node_id, 2, status_reply)
+    # db_update_motion(node_id, status_reply)
 
 
 #######################################
@@ -248,20 +225,23 @@ def delete_rule_task(node_id, rule_id):
     return {'result': False}
 
 
-def db_update_status(node_id, status_type, status):
-    if status_type == 0 or status_type == 1:
-        return
-        # TODO LED and Motion not yet implemented
+def db_update_status(node_id, status, status_type=None):
+    if status_type is None:
+        raise Exception("Status type can't be None")
 
-    if status == "ON":
-        current = True
-    elif status == "OFF":
-        current = False
-    else:
-        return
+    status_map = {
+        'On': True,
+        'Off': False,
+    }
+    current_status = status_map[status]
 
-    node = Node.query.filter_by(id=node_id).first()
-    node.relay_status = current
+    node = Node.query.get(node_id)
+    setattr(node, status_type, current_status)
     db.session.commit()
 
-    return
+def db_update_relay(node_id, status):
+    db_update_status(node_id, status, status_type='relay_status')
+
+
+def db_update_motion(node_id, status):
+    db_update_status(node_id, status, status_type='relay_status')

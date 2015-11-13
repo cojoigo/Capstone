@@ -83,8 +83,6 @@ def search_for_nodes():
 @app.route('/nodes/find/<job_id>', methods=['GET'])
 @login_required
 def find_nodes(job_id):
-    print(job_id)
-
     job = find_nodes_task.AsyncResult(job_id)
     if job.ready():
         print('  find result', job.result)

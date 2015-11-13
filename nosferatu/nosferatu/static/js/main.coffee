@@ -456,7 +456,7 @@
                                 console.log('      - data', self.nodes)
 
                                 # Reset the button to search for more nodes now
-                                if self.foundNodes.length == 0
+                                if Object.keys(self.foundNodes).length == 0
                                     self.findingNodes = false
                                 self.submitButtonText = submitButtonTexts[self.findingNodes]
 
@@ -502,7 +502,8 @@
                                     self.foundNodes[mac] = results.data[mac]
                                 console.log('     - data', self.foundNodes)
 
-                                if self.foundNodes.length == 0
+                                console.log('hey theyrer', Object.keys(self.foundNodes).length)
+                                if Object.keys(self.foundNodes).length == 0
                                     self.findingNodes = false
                                 self.submitButtonText = submitButtonTexts[self.findingNodes]
                                 $timeout.cancel(timeout)

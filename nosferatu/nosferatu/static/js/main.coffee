@@ -11,7 +11,7 @@
             log.log("PollFuncing", count)
             httpSomething.then(
                 ((results) ->
-                    if results.status == 202
+                    if results.status in [202, 502]
                         log.log("  - failed:", results.data)
                         count += 1
                         if count is 3

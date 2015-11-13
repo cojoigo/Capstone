@@ -1,11 +1,10 @@
 import logging
 
-from .node_lock import *
 from . import cache, celery, db
 from .models import Node, Rule
-from .node_find import find_nodes
-from .status_request import *
-from .status_change import *
+from .node_utils import find_nodes, change_node_status, get_node_status
+from .task_lock import task_lock
+
 log = logging.getLogger()
 
 
@@ -15,32 +14,32 @@ log = logging.getLogger()
 def get_node_status_task(node_id):
     node = Node.query.filter_by(id=node_id).first()
     ip_str = str(node.ip_addr)
-    mac = str( node.mac_addr )
+    mac = str(node.mac_addr)
 
-    with task_lock( key = mac, timeout = 15 ):
-        status = status_request( ip_str, "ALL" ).strip(' \t\r\n').split("&")
+    with task_lock(key=mac, timeout=15):
+        status = get_node_status(ip_str, "ALL").strip(' \t\r\n').split("&")
 
     while len(status) < 3:
         status.append('5')
         # Error in status reply. Should be "status&status&status"
 
     for i in range(0, 3):
-        db_update_status( node_id, i, status[i] )
+        db_update_status(node_id, i, status[i])
 
     led_status = status[0]
     motion_status = status[1]
     relay_status = status[2]
 
-    #Status will be a number:
-    ## 0 == status OFF
-    ## 1 == status ON
-    ## 2 == Error establishing TCP connection to node
-    ## 3 == Error sending status request packet
-    ## 4 == Waiting for status reply timed out
-    ## 5 == Received unknown status from node
+    # Status will be a number:
+    # 0 == status OFF
+    # 1 == status ON
+    # 2 == Error establishing TCP connection to node
+    # 3 == Error sending status request packet
+    # 4 == Waiting for status reply timed out
+    # 5 == Received unknown status from node
 
     mapString = {
-        'ON' : 'On',
+        'ON': 'On',
         'OFF': 'Off',
         '0': 'Off',
         '1': 'On',
@@ -56,6 +55,7 @@ def get_node_status_task(node_id):
         'motion': mapString[motion_status],
     }
 
+
 @celery.task
 def test_node_task(node_id, stop=False):
     if stop:
@@ -66,15 +66,14 @@ def test_node_task(node_id, stop=False):
     node = Node.query.filter_by(id=node_id).first()
 
     ip_str = str(node.ip_addr)
-    mac = str( node.mac_addr )
+    mac = str(node.mac_addr)
 
-    with task_lock( key = mac, timeout = 15 ):
-        status = status_change( ip_str, "TEST", test )
+    with task_lock(key=mac, timeout=15):
+        change_node_status(ip_str, "TEST", test)
 
 
 @celery.task(bind=True)
 def find_nodes_task(self):
-
     nodes = find_nodes()
 
     '''
@@ -99,16 +98,17 @@ def find_nodes_task(self):
 
     return nodes
 
+
 def toggle_node_task(node_id):
     node = Node.query.filter_by(id=node_id).first()
 
     ip_str = str(node.ip_addr)
-    mac = str( node.mac_addr )
+    mac = str(node.mac_addr)
 
-    with task_lock( key = mac, timeout = 15 ):
-        status = status_change( ip_str, "RELAY", "TOGGLE" )
+    with task_lock(key=mac, timeout=15):
+        status = change_node_status(ip_str, "RELAY", "TOGGLE")
 
-    db_update_status( node_id, 3, status )
+    db_update_status(node_id, 3, status)
 
 
 def change_motion_task(node_id, status):
@@ -119,10 +119,11 @@ def change_motion_task(node_id, status):
 
     status = status['motion'].upper()
 
-    with task_lock(key=mac, timeout = 15):
-        status_reply = status_change(ip_str, "MOTION", status)
+    with task_lock(key=mac, timeout=15):
+        status_reply = change_node_status(ip_str, "MOTION", status)
 
-    db_update_status( node_id, 2, status_reply )
+    db_update_status(node_id, 2, status_reply)
+
 
 #######################################
 # Database calls
@@ -246,10 +247,11 @@ def delete_rule_task(node_id, rule_id):
         raise
     return {'result': False}
 
-def db_update_status( node_id, status_type, status ):
+
+def db_update_status(node_id, status_type, status):
     if status_type == 0 or status_type == 1:
         return
-        #TODO LED and Motion not yet implemented
+        # TODO LED and Motion not yet implemented
 
     if status == "ON":
         current = True
@@ -263,5 +265,3 @@ def db_update_status( node_id, status_type, status ):
     db.session.commit()
 
     return
-
-

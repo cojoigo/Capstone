@@ -184,7 +184,7 @@ def get_node_status(ip, status_type="ALL", send_port=DEFAULT_SEND_PORT):
     sender.close()
 
     if status_type == 'ALL':
-        result = tuple(status.title() for status in status.split('&'))
+        result = tuple(status.title() for status in status.strip(' \t\r\n').split("&"))
         assert(len(result) == 3)
         return result
     else:

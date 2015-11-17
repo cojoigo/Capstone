@@ -56,7 +56,7 @@ def get_node_status_task(node_id):
 
     with task_lock(key=mac, timeout=10):
         try:
-            status = get_node_status(ip_str).strip(' \t\r\n').split("&")
+            status = get_node_status(ip_str)
         except (BadIpException, CommunicationException, BadStatusException) as e:
             print(e)
             status = ('Erroar', 'Erroar', 'Erroar')

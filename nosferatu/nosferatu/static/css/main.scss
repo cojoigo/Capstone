@@ -66,8 +66,20 @@ body {
   background-color: #F0FF10;
 }
 
+.relayOn:focus {
+    background-color: #F0FF10;
+    border-color: #F0FF10;
+    outline-color: #F0FF10;
+}
+
 .relayOff {
   background-color: #777777;
+}
+
+.relayOff:focus {
+    background-color: #777777;
+    border-color: #777777;
+    outline-color: #777777;
 }
 
 button[disabled] {

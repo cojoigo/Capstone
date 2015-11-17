@@ -579,7 +579,7 @@
                     ), errFunc
                 )
 
-            @change_motion = () ->
+            @changeMotion = () ->
                 $log.log("Changing motion setting, #{self.node.id}")
 
                 if self.motionStatus is 'Off'
@@ -667,7 +667,7 @@
                                 $log.log("  - failed:", results.data)
                             else if results.status == 200
                                 $log.log(" - ", results.data)
-                                self.relayStatus = results.data.led is 'On'
+                                self.relayStatus = results.data.relay is 'On'
                                 if results.data.relay != 'Error'
                                     date = new Date()
                                     self.lastUpdate = date.toLocaleString()

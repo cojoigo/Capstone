@@ -23,7 +23,6 @@ class BadStatusException(Exception):
 def node_auth(ip, send_port=DEFAULT_SEND_PORT):
     """Connect to a device through TCP and attempts to authenticate it.
     """
-
     sender = socket(AF_INET, SOCK_STREAM)
     addr = (ip, send_port)
 
@@ -118,7 +117,6 @@ def change_node_status(node_ip, request_type, status, send_port=DEFAULT_SEND_POR
 
     It can be used to change the state of the LED, Relay, or Motion Sensor.
     """
-
     if "192.168" in node_ip:
         pass
     else:
@@ -196,4 +194,3 @@ def get_node_status(ip, status_type="ALL", send_port=DEFAULT_SEND_PORT):
             return 'On'
         else:
             raise BadStatusException('Unexpected status: {}', status)
-

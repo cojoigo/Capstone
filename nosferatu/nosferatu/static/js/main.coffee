@@ -673,7 +673,7 @@
                                     self.lastUpdate = date.toLocaleString()
                                     self.motionStatus = results.data.motion
 
-                            # Continue to call the poller every 2 seconds until its canceled
+                            # Continue to call the poller every 5 seconds until its canceled
                             time = $timeout(poller, 5000)
                         ), errFunc
                     )

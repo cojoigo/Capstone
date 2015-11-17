@@ -2,7 +2,10 @@ import logging
 
 from . import cache, celery, db
 from .models import Node, Rule
-from .node_utils import find_nodes, change_node_status, get_node_status
+from .node_utils import (
+    find_nodes, change_node_status, get_node_status,
+    BadIpException, CommunicationException, BadStatusException,
+)
 from .task_lock import task_lock
 
 log = logging.getLogger()
@@ -36,7 +39,7 @@ def rules_poll():
             else:
                 action = 'OFF'
 
-            with task_lock(key=mac, timeout=15):
+            with task_lock(key=mac, timeout=10):
                 status = change_node_status(ip_str, 'RELAY', action)
 
 
@@ -48,11 +51,11 @@ def get_node_status_task(node_id):
     ip_str = str(node.ip_addr)
     mac = str(node.mac_addr)
 
-    with task_lock(key=mac, timeout=15):
+    with task_lock(key=mac, timeout=10):
         try:
             status = get_node_status(ip_str).strip(' \t\r\n').split("&")
         except (BadIpException, CommunicationException, BadStatusException) as e:
-            print(e.message)
+            print(e)
             status = ('Erroar', 'Erroar', 'Erroar')
 
     led_status, motion_status, relay_status = status
@@ -79,6 +82,7 @@ def test_node_task(node_id, stop=False):
 
     with task_lock(key=mac, timeout=15):
         change_node_status(ip_str, "TEST", test)
+
 
 def find_nodes_task():
     nodes = find_nodes()
@@ -261,6 +265,8 @@ def delete_rule_task(node_id, rule_id):
 def db_update_status(node_id, status, status_type=None):
     if status_type is None:
         raise Exception("Status type can't be None")
+    if status not in ['On', 'Off']:
+        return
 
     status_map = {
         'On': True,
@@ -272,9 +278,10 @@ def db_update_status(node_id, status, status_type=None):
     setattr(node, status_type, current_status)
     db.session.commit()
 
+
 def db_update_relay(node_id, status):
     db_update_status(node_id, status, status_type='relay_status')
 
 
 def db_update_motion(node_id, status):
-    db_update_status(node_id, status, status_type='relay_status')
+    db_update_status(node_id, status, status_type='motion_status')

@@ -33,7 +33,20 @@
         $interpolateProvider.startSymbol('{[')
         $interpolateProvider.endSymbol(']}')
     ])
-    app.directive('foundNode', () ->
+    .filter('notthesame', () ->
+        return (input, rselect) ->
+            if not input?
+                return input
+            if not rselect?
+                return input
+            result = []
+            angular.forEach(input, (value) ->
+                if value.name? and value.name isnt rselect.node.name
+                    result.push(value)
+            )
+            return result
+    )
+    .directive('foundNode', () ->
         template = '<div ng-transclude></div>'
 
         controller = ['$scope', '$log', '$http', '$timeout', ($scope, $log, $http, $timeout) ->
@@ -201,6 +214,13 @@
                 else
                     @ruleTurnOnStr = 'Off'
 
+            @foreignNode = @foreignNodes[0]
+            @foreignNodeStatus = 'Is On'
+
+            @eventNode = (node) ->
+                $log.log(" - node from node name", node)
+                return node.id
+
             @addRule = (real) ->
                 if not real?
                     return
@@ -211,7 +231,7 @@
                     'type': @ruleType
                     'turn_on': @ruleTurnOn
                     'days': @daysOfWeekSelected
-                    'schedule_type': @scheduleTimeType
+                    'sched_type': @scheduleTimeType
 
                     # manual
                     'hour': @hoursInDay[@hourInDay]
@@ -220,8 +240,12 @@
                     # auto
                     'zip_code': @scheduleZipCode or ''
                     'time_of_day': @scheduleTimeOfDayType
+
+                    'event_node': @eventNode(self.foreignNode)
+                    'event_node_status': self.foreignNodeStatus
                 }
 
+                return
                 $http.post("/nodes/#{@node.id}/rules", data).then(
                     ((results) ->
                         $log.log(" - job: #{results.data}")
@@ -274,6 +298,7 @@
         ]
         return {
             bindToController: {
+                foreignNodes: '='
                 node: '='
                 addedRules: '='
 
@@ -473,56 +498,28 @@
             this.findNodes = () ->
                 $log.log('Searching for new nodes')
 
-                $http.get('/nodes/find').then(
-                    ((results) ->
-                        $log.log(' - id', results.data)
-                        self.findNodesPoll(results.data)
-                        self.findingNodes = true
-                        self.submitButtonText = submitButtonTexts[self.findingNodes]
-                    ),
-                    errFunc
-                )
+                self.findingNodes = true
+                self.submitButtonText = submitButtonTexts[self.findingNodes]
 
-            this.findNodesPoll = (jobId) ->
-                timeout = ''
-                count = 0
-                poller = () ->
-                    $log.log(' - /nodes/find/' + jobId, count)
-                    $http.get('/nodes/find/' + jobId).then(
-                        ((results) ->
-                            if results.status == 202
-                                $log.log("   - failed:", results)
-                                count += 1
-                                if count is 3
-                                    $timeout.cancel(timeout)
-                                    return false
-                            else if results.status == 200
-                                $log.log("   - success: ", results.data)
-                                for mac, item of results.data
-                                    self.foundNodes[mac] = results.data[mac]
-                                console.log('     - data', self.foundNodes)
+                $http.post('/nodes/find').then((results) ->
+                    $log.log(' - id', results.data)
 
-                                console.log('hey theyrer', Object.keys(self.foundNodes).length)
-                                if Object.keys(self.foundNodes).length == 0
-                                    self.findingNodes = false
-                                self.submitButtonText = submitButtonTexts[self.findingNodes]
-                                $timeout.cancel(timeout)
-                                return false
-                            else
-                                self.findingNodes = false
-                                self.submitButtonText = submitButtonTexts[self.findingNodes]
+                    if results.status == 200
+                        $log.log("   - success: ", results.data)
+                        for mac, item of results.data
+                            self.foundNodes[mac] = results.data[mac]
+                        console.log('     - data', self.foundNodes)
 
-                            # Continue to call the poller every 2 seconds until its canceled
-                            timeout = $timeout(poller, 2000)
-                        ),
-                        ((error) ->
-                            $log.log(error)
+                        console.log('hey theyrer', Object.keys(self.foundNodes).length)
+                        if Object.keys(self.foundNodes).length == 0
                             self.findingNodes = false
-                            self.submitButtonText = submitButtonTexts[self.findingNodes]
-                        )
-                    )
-                poller()
-
+                        self.submitButtonText = submitButtonTexts[self.findingNodes]
+                    else
+                        $log.log("   - failed:", results)
+                ).catch(() ->
+                    self.findingNodes = false
+                    self.submitButtonText = submitButtonTexts[self.findingNodes]
+                )
             return
         ]
     )
@@ -538,7 +535,8 @@
             @rules = {}
             @addedRules = []
             @deleted = false
-            @motion_status = 'Off'
+            @motionStatus = 'Off'
+            @relayStatus = false
 
             $scope.$watchCollection(
                 angular.bind(this, () -> return @addedRules),
@@ -584,7 +582,7 @@
             @change_motion = () ->
                 $log.log("Changing motion setting, #{self.node.id}")
 
-                if self.motion_status is 'Off'
+                if self.motionStatus is 'Off'
                     status = 'On'
                 else
                     status = 'Off'
@@ -669,11 +667,11 @@
                                 $log.log("  - failed:", results.data)
                             else if results.status == 200
                                 $log.log(" - ", results.data)
-                                self.relayStatus = results.data.led
+                                self.relayStatus = results.data.led is 'On'
                                 if results.data.relay != 'Error'
                                     date = new Date()
                                     self.lastUpdate = date.toLocaleString()
-                                    self.motion_status = results.data.motion
+                                    self.motionStatus = results.data.motion
 
                             # Continue to call the poller every 2 seconds until its canceled
                             time = $timeout(poller, 5000)

@@ -60,8 +60,13 @@
             <h1>Status</h1>
             <div class="row">
               <div class="small-4 columns">
-                <button type="button" class="btn btn-default" ng-click="settings.toggle()">
-                  Toggle Light (actual {[settings.relayStatus]})
+                <button
+                  type="button"
+                  class="btn btn-default"
+                  ng-class="{'relayOn': settings.relayStatus, 'relayOff': !settings.relayStatus }"
+                  ng-click="settings.toggle()"
+                >
+                  Toggle Light
                 </button>
                 <label>Last Node Update:</label>
                 <label>{[settings.lastUpdate]}</label>

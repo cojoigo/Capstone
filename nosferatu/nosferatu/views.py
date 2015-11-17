@@ -71,24 +71,10 @@ def node_adding_jobs(job_id):
         return 'ERROR', 202
 
 
-@app.route('/nodes/find/', methods=['GET'])
+@app.route('/nodes/find', methods=['POST'])
 @login_required
 def search_for_nodes():
-    job = find_nodes_task.delay()
-
-    print('find', job.id)
-    return job.id
-
-
-@app.route('/nodes/find/<job_id>', methods=['GET'])
-@login_required
-def find_nodes(job_id):
-    job = find_nodes_task.AsyncResult(job_id)
-    if job.ready():
-        print('  find result', job.result)
-        return jsonify(job.result)
-    else:
-        return 'ERROR', 202
+    return jsonify(find_nodes_task())
 
 
 @app.route('/nodes/<node_id>', methods=['GET', 'DELETE'])

@@ -19,7 +19,9 @@ def rules_poll():
     for rule in rules:
         ids.append(rule.event_node)
 
-    nodes = Node.query.filter_by(id.in_(ids))
+    nodes = Node.query.filter(Node.id.in_(ids)) if ids else []
+
+    node_info = {}
     for node in nodes:
         node_info[node.id] = (nodes.status, node.ip_addr, node.mac_addr)
 
@@ -27,15 +29,16 @@ def rules_poll():
         node = node_info[r.eventNode]
         if node[0] == r.event_node_state:
             ip_str = str(node[1])
-            mac_str = str(node[2])
+            mac = str(node[2])
 
             if r.turn_on:
-                with task_lock( key = mac, timeout = 15 ):
-                    status = status_change( ip_str, "RELAY", "ON" )
+                action = 'ON'
+            else:
+                action = 'OFF'
 
-            if !r.turn_on:
-                with task_lock(key = mac, timeout = 15 ):
-                    status = status_change( ip_str, "RELAY", "OFF")
+            with task_lock(key=mac, timeout=15):
+                status = change_node_status(ip_str, 'RELAY', action)
+
 
 #######################################
 # Direct Node Communication
@@ -77,10 +80,8 @@ def test_node_task(node_id, stop=False):
     with task_lock(key=mac, timeout=15):
         change_node_status(ip_str, "TEST", test)
 
-@celery.task(bind=True)
-def find_nodes_task(self):
+def find_nodes_task():
     nodes = find_nodes()
-
     '''
     nodes = {
         'a0:2b:03:c3:f3:12': {
@@ -100,7 +101,6 @@ def find_nodes_task(self):
         },
     }
     '''
-
     return nodes
 
 

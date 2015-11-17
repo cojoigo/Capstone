@@ -18,7 +18,7 @@ class Node(db.Model):
     relay_status = db.Column(db.Boolean, default=False)
 
     user_id = db.Column(db.Integer, ForeignKey('users.id'))
-    rules = relationship('Rule', backref='nodes')
+    rules = relationship('Rule', backref='nodes', foreign_keys='[Rule.node]')
 
     def __init__(self, name, ip_addr, mac_addr, user_id):
         self.name = name
@@ -55,7 +55,7 @@ class Rule(db.Model):
     days = db.Column(db.String(56), nullable=False)
 
     # Schedules
-    sched_type = db.Column(db.String(56), nullable=False)
+    schedule_type = db.Column(db.String(56), nullable=False)
 
     # - Manual
     sched_hour = db.Column(db.Integer)

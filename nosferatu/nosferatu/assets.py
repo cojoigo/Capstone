@@ -8,7 +8,7 @@ environment.register(
         'css/lib/foundation.min.css',
         'css/lib/normalize.min.css',
         Bundle(
-            'css/main.scss',
+            'css/base.scss',
             filters='scss',
         ),
         filters='cssmin', output='public/css/common.css',
@@ -22,7 +22,7 @@ environment.register(
         'js/lib/foundation.min.js',
         'js/lib/mm-foundation-tpls-0.6.0.min.js',
         Bundle(
-            'js/main.coffee',
+            'js/app.coffee',
             filters='coffeescript',
         ),
         filters='jsmin',

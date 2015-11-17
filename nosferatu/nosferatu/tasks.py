@@ -189,6 +189,8 @@ def add_rule_task(node_id, rule):
                     zip_code = 0
             if not zip_code:
                 zip_code = 0
+                if rule.get('sched_type') == 'auto':
+                    raise Exception("Error no Zipcode")
 
         rule = Rule(
             name=rule['name'],
@@ -215,7 +217,6 @@ def add_rule_task(node_id, rule):
         return {'id': rule.id}
     except Exception as e:
         log.exception(e)
-        raise
 
 
 def delete_node_task(node_id):

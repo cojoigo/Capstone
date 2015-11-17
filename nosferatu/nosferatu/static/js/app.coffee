@@ -173,7 +173,7 @@
                 result = (
                     (not @ruleName) or
                     (not @daysOfWeekSelected.length) or
-                    (if (@scheduleTimeType is 'auto') then (not @scheduleZipCode?) else false)
+                    (if (@scheduleTimeType is 'auto') then (not @scheduleZipCode) else false)
                 )
                 return result
 

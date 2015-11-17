@@ -198,7 +198,7 @@ def add_rule_task(node_id, rule):
 
             sched_type=rule.get('sched_type'),
             sched_hour=rule.get('hour'),
-            sched_minute=rule.ge('minute'),
+            sched_minute=rule.get('minute'),
             sched_zip_code=zip_code,
             sched_time_of_day=rule.get('time_of_day'),
 

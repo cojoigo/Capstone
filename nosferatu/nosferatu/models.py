@@ -55,7 +55,7 @@ class Rule(db.Model):
     days = db.Column(db.String(56), nullable=False)
 
     # Schedules
-    schedule_type = db.Column(db.String(56), nullable=False)
+    sched_type = db.Column(db.String(56), nullable=False)
 
     # - Manual
     sched_hour = db.Column(db.Integer)

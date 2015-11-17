@@ -219,12 +219,11 @@
 
             @eventNode = (node) ->
                 $log.log(" - node from node name", node)
-                return node.id
+                if node?
+                    return node.id
+                return null
 
-            @addRule = (real) ->
-                if not real?
-                    return
-
+            @addRule = () ->
                 $log.log('Adding the rule')
                 data = {
                     'name': @ruleName
@@ -241,11 +240,10 @@
                     'zip_code': @scheduleZipCode or ''
                     'time_of_day': @scheduleTimeOfDayType
 
-                    'event_node': @eventNode(self.foreignNode)
-                    'event_node_status': self.foreignNodeStatus
+                    'event_node': self.eventNode(self.foreignNode)
+                    'event_node_status': self.foreignNodeStatus or null
                 }
 
-                return
                 $http.post("/nodes/#{@node.id}/rules", data).then(
                     ((results) ->
                         $log.log(" - job: #{results.data}")

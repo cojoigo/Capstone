@@ -26,13 +26,13 @@ def rules_poll():
 
     node_info = {}
     for node in nodes:
-        node_info[node.id] = (nodes.status, node.ip_addr, node.mac_addr)
+        node_info[node.id] = node
 
     for r in rules:
         node = node_info[r.eventNode]
-        if node[0] == r.event_node_state:
-            ip_str = str(node[1])
-            mac = str(node[2])
+        if node.status == r.event_node_state:
+            ip_str = str(node.ip_addr)
+            mac = str(node.mac_addr)
 
             if r.turn_on:
                 action = 'ON'
@@ -41,6 +41,9 @@ def rules_poll():
 
             with task_lock(key=mac, timeout=10):
                 status = change_node_status(ip_str, 'RELAY', action)
+
+            led_status, motion_status, relay_status = status
+            db_update_relay(node.id, relay_status)
 
 
 #######################################

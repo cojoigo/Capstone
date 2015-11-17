@@ -4,7 +4,7 @@ from flask import render_template, jsonify, request
 from flask_user import login_required, current_user
 from flask_user.signals import user_sent_invitation, user_registered
 
-from . import app, cache, celery, db
+from . import app, cache, db
 from .models import Node
 from .tasks import *
 

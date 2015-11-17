@@ -1,6 +1,7 @@
 import logging
 
-from . import cache, celery, db
+from apscheduler.jobstores.base import JobLookupError
+from . import cache, db
 from .models import Node, Rule
 from .node_utils import (
     find_nodes, change_node_status, get_node_status,
@@ -10,11 +11,7 @@ from .task_lock import task_lock
 
 log = logging.getLogger()
 
-
-#######################################
-# Rules Poll
-#######################################
-def change_state(affected_node, node_to_check, field, thing, rule):
+def change_state(affected_node, field, thing):
     # If field is `None` the action is "unchanged"
     if field is not None:
         # Otherwise it means on or off
@@ -39,7 +36,6 @@ def change_state(affected_node, node_to_check, field, thing, rule):
 
 
 
-@celery.task
 def rules_poll():
     rules = Rule.query.filter_by(type='Event')
 
@@ -63,10 +59,9 @@ def rules_poll():
             # If `node_to_check` has the state of `event_node_state` then `affected_node`
             # should change ITS state to the value of `turn_on`
             if node_to_check.relay_status == rule.event_node_state:
-                change_state(affected_node, node_to_check, rule.turn_on, 'RELAY', rule)
+                change_state(affected_node, rule.turn_on, 'RELAY')
             if node_to_check.motion_status == rule.event_node_state:
-                change_state(affected_node, node_to_check, rule.turn_motion_on, 'MOTION', rule)
-
+                change_state(affected_node, rule.turn_motion_on, 'MOTION')
 
 #######################################
 # Direct Node Communication
@@ -114,7 +109,7 @@ def test_node_task(args):
 
 def find_nodes_task():
     nodes = find_nodes()
-    '''
+
     nodes = {
         'a0:2b:03:c3:f3:12': {
             'ip': '1.2.3.4',
@@ -132,7 +127,7 @@ def find_nodes_task():
             'on': True,
         },
     }
-    '''
+
     return nodes
 
 
@@ -171,6 +166,9 @@ def change_motion_task(node_id, input):
 #######################################
 # Database calls
 #######################################
+from . import schedule
+
+
 def add_node_task(node, user_id):
     try:
         if not node['name']:
@@ -247,6 +245,10 @@ def add_rule_task(node_id, rule):
         )
         db.session.add(rule)
         db.session.commit()
+
+        if rule.type == 'Schedule':
+            from .scheduler import add_sched_rule
+            add_sched_rule(rule, schedule)
 
         print(rule.id)
 
@@ -331,6 +333,12 @@ def delete_rule_task(node_id, rule_id):
         if rule:
             db.session.delete(rule)
             db.session.commit()
+
+            try:
+                schedule.remove_job(str(rule.id))
+                schedule.print_jobs()
+            except JobLookupError:
+                pass
             return {'result': rule.id}
     except:
         raise

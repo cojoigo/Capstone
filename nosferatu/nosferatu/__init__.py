@@ -1,4 +1,4 @@
-from celery import Celery
+from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask
 from flask.ext.cache import Cache
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -7,20 +7,6 @@ from werkzeug.contrib.fixers import ProxyFix
 
 from .assets import environment
 
-
-def make_celery(app):
-    celery = Celery(app.import_name, broker=app.config['CELERY_BROKER_URL'])
-    celery.conf.update(app.config)
-    TaskBase = celery.Task
-
-    class ContextTask(TaskBase):
-        abstract = True
-
-        def __call__(self, *args, **kwargs):
-            with app.app_context():
-                return TaskBase.__call__(self, *args, **kwargs)
-    celery.Task = ContextTask
-    return celery
 
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_object('config')
@@ -31,13 +17,17 @@ if app.debug:
     app.wsgi_app = DebuggedApplication(app.wsgi_app, True)
 
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
-celery = make_celery(app)
 db = SQLAlchemy(app)
 
+schedule = BackgroundScheduler()
+
 from .models import *
+from .scheduler import schedule_rules
 from .tasks import *
 from .views import *
 
 environment.init_app(app)
 db_adaptor = SQLAlchemyAdapter(db, User)
 user_manager = UserManager(db_adaptor, app)
+schedule_rules(schedule)
+schedule.start()

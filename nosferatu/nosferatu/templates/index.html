@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block main %}
-  <div class="container" ng-controller="nosferatuController as main">
+  <div class="container" ng-controller="mainController as main">
     <div>
       <form role="form" ng-submit="main.findNodes()">
         <button type="submit" class="btn btn-default" ng-disabled="main.findingNodes">{[main.submitButtonText]}</button>
@@ -9,41 +9,8 @@
       </form>
 
       <tabset vertical="true">
-        <tab ng-repeat="node in main.foundNodes"
-             heading="{[node.ip]}"
-        >
-          <found-node node="node" added-nodes="main.addedNodes">
-            <form role="form" ng-submit="node.add()">
-              <div class="row">
-                <div class="small-4 columns">
-                  <input type="text" placeholder="Node Name" ng-model="node.name"/>
-                </div>
-                <div class="small-4 columns">
-                  <label>Node IP:
-                    <label>{[node.ip]}</label>
-                  </label>
-                </div>
-                <div class="small-4 columns">
-                  <label>Node MAC:
-                    <label>{[node.mac]}</label>
-                  </label>
-                </div>
-              </div>
-              <div class="row">
-                <div class="small-4 columns"></div>
-                <div class="small-4 columns">
-                  <button type="button" ng-click="node.test()">
-                    {[node.testBtnText]}
-                  </button>
-                </div>
-                <div class="small-4 columns">
-                  <button type="submit" class="btn btn-default" ng-disabled="main.saving">
-                    {[node.saveBtnText]}
-                  </button>
-                </div>
-              </div>
-            </form>
-          </found-node>
+        <tab ng-repeat="node in main.foundNodes" heading="{[node.ip]}">
+          <found-node node="node" added-nodes="main.addedNodes"></found-node>
         </tab>
       </tabset>
     </div>
@@ -54,7 +21,17 @@
       <tab heading="Global">
         <h1>Global Status and Settings</h1>
       </tab>
-      <tab ng-repeat="node in main.nodes" heading="{[node.name]}" ng-class="{[node.status]}">
+      <tab ng-repeat="node in main.nodes" ng-class="{[node.status]}">
+        <tab-heading>
+          {[node.name]}
+
+          <button
+            type="button"
+            class="deleteBtn"
+            ng-click="main.delete(node)">
+            X
+          </button>
+        </tab-heading>
         <div ng-controller="nodeSettingsController as settings">
           <form role="form" ng-submit="node.changeStatus()">
             <h1>Status</h1>
@@ -77,9 +54,6 @@
                 </button>
               </div>
               <div class="small-4 columns">
-                <button type="button" class="btn btn-default" ng-click="settings.delete(main.nodes)">
-                  Delete
-                </button>
               </div>
             </div>
           </form>

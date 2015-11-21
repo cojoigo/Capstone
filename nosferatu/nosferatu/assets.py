@@ -23,6 +23,9 @@ environment.register(
         'js/lib/mm-foundation-tpls-0.6.0.min.js',
         Bundle(
             'js/app.coffee',
+            'js/filters.coffee',
+            'js/directives/*',
+            'js/controllers/*',
             filters='coffeescript',
         ),
         filters='jsmin',

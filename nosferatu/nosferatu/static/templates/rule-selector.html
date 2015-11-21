@@ -1,49 +1,49 @@
-<form role="form" ng-submit="rselect.addRule()">
+<form role="form" ng-submit="rs.addRule()">
   <h1>Add a rule</h1>
   <div class="row">
     <div class="small-4 columns">
       <label>Rule Name</label>
-      <input type="text" placeholder="Rule Name" ng-model="rselect.ruleName" value="" />
+      <input type="text" placeholder="Rule Name" ng-model="rs.ruleName" value="" />
     </div>
     <div class="small-4 columns">
       <label>Rule Type</label>
       <select
-        ng-options="type for type in rselect.ruleTypes"
-        ng-model="rselect.ruleType"
+        ng-options="type for type in rs.ruleTypes"
+        ng-model="rs.ruleType"
       ></select>
     </div>
     <div class="small-4 columns">
       <button
         type="submit"
         class="btn btn-default"
-        ng-disabled="rselect.enableAddRuleBtn()"
+        ng-disabled="rs.enableAddRuleBtn()"
       >Add</button>
     </div>
   </div>
 
   <div class="row">
     <div class="small-4 columns">
-      <label ng-repeat="day in rselect.daysOfWeek">
+      <label ng-repeat="day in rs.daysOfWeek">
         <input
           type="checkbox"
           name="daysOfTheWeek"
-          value="{[day]}"
-          ng-checked="rselect.daysOfWeekSelected.indexOf(day) > -1"
-          ng-click="rselect.daysOfWeekToggle(day)"
-        /> {[day]}
+          value="{[ day ]}"
+          ng-checked="rs.daysOfWeekSelected.indexOf(day) > -1"
+          ng-click="rs.daysOfWeekToggle(day)"
+        /> {[ day ]}
         <br />
       </label>
     </div>
 
     <div class="small-4 columns">
-      <div ng-show="rselect.ruleType === 'Schedule'">
+      <div ng-show="rs.ruleType === 'Schedule'">
         <label>Select Time Type</label>
         <label>
           <input
             type="radio"
             name="scheduleTimeType"
             value="manual"
-            ng-model="rselect.scheduleTimeType" />
+            ng-model="rs.scheduleTimeType" />
           Manual
           <br />
         </label>
@@ -53,29 +53,29 @@
             type="radio"
             name="scheduleTimeType"
             value="auto"
-            ng-model="rselect.scheduleTimeType" />
+            ng-model="rs.scheduleTimeType" />
           Automatic
           </br />
         </label>
 
-        <div ng-show="rselect.scheduleTimeType === 'manual'">
+        <div ng-show="rs.scheduleTimeType === 'manual'">
           <label>Hour</label>
           <select
-            ng-options="day for day in rselect.hoursInDayArr"
-            ng-model="rselect.hourInDay"
+            ng-options="day for day in rs.hoursInDayArr"
+            ng-model="rs.hourInDay"
           ></select>
           <br />
 
           <label>Minute</label>
           <select
-            ng-options="minute for minute in rselect.minutesInDay"
-            ng-model="rselect.minuteInDay"
+            ng-options="minute for minute in rs.minutesInDay"
+            ng-model="rs.minuteInDay"
           ></select>
           <br />
         </div>
-        <div ng-show="rselect.scheduleTimeType === 'auto'">
+        <div ng-show="rs.scheduleTimeType === 'auto'">
           <label>Zip Code</label>
-          <input type="text" ng-model="rselect.scheduleZipCode" value="" />
+          <input type="text" ng-model="rs.scheduleZipCode" value="" />
 
           <label>Select time of Day</label>
           <label>
@@ -83,7 +83,7 @@
               type="radio"
               name="scheduleTimeOfDayType"
               value="sunrise"
-              ng-model="rselect.scheduleTimeOfDayType" />
+              ng-model="rs.scheduleTimeOfDayType" />
             Sunrise
             <br />
           </label>
@@ -93,18 +93,18 @@
               type="radio"
               name="scheduleTimeOfDayType"
               value="sunset"
-              ng-model="rselect.scheduleTimeOfDayType" />
+              ng-model="rs.scheduleTimeOfDayType" />
             Sunset
             <br />
           </label>
         </div>
       </div>
 
-      <div ng-show="rselect.ruleType === 'Event'">
+      <div ng-show="rs.ruleType === 'Event'">
         <label>Reference to Node</label>
         <select
-          ng-options="n.name for n in rselect.foreignNodes | notthesame:rselect"
-          ng-model="rselect.foreignNode"
+          ng-options="n.name for n in rs.foreignNodes | notthesame:rs"
+          ng-model="rs.foreignNode"
         ></select>
 
         <br />
@@ -114,7 +114,7 @@
             type="radio"
             name="foreignNodeStatus"
             value="on"
-            ng-model="rselect.foreignNodeStatus" />
+            ng-model="rs.foreignNodeStatus" />
           Is On
           <br />
         </label>
@@ -124,24 +124,24 @@
             type="radio"
             name="foreignNodeStatus"
             value="off"
-            ng-model="rselect.foreignNodeStatus" />
+            ng-model="rs.foreignNodeStatus" />
           Is Off
           <br />
         </label>
       </div>
 
-      <div ng-show="rselect.ruleType === 'Motion'">
+      <div ng-show="rs.ruleType === 'Motion'">
       </div>
     </div>
 
     <div class="small-4 columns">
       <div class="small-4 columns">
-        <label for="ruleAddTurnOn">Action: Turn {[rselect.ruleTurnOnStr]}</label>
+        <label for="ruleAddTurnOn">Turn&nbsp;{[ rs.ruleTurnOnStr ]}</label>
         <input
           type="checkbox"
           id="ruleAddTurnOn"
-          ng-model="rselect.ruleTurnOn"
-          ng-change="rselect.scheduleActionChange()"/>
+          ng-model="rs.ruleTurnOn"
+          ng-change="rs.scheduleActionChange()"/>
       </div>
     </div>
   </div>

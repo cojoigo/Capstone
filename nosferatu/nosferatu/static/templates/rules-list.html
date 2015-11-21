@@ -1,0 +1,29 @@
+<h1>Existing Rules</h1>
+<table>
+<tr>
+  <td><b>Delete</b></td>
+  <td><b>Name</b></td>
+  <td><b>Days</b></td>
+  <td><b>Action</b></td>
+  <td><b>Type</b></td>
+  <td><b>Details</b></td>
+</tr>
+<tr ng-repeat="rule in rlist.rules">
+  <td>
+    <button type="submit" class="deleteBtn" ng-click="rlist.delete(rule.id)">
+      X
+    </button>
+  </td>
+  <td>{[ rule.name ]}</td>
+  <td>
+    <div ng-repeat="day in rule.days">
+      {[ day ]}
+      <br>
+    </div>
+  </td>
+  <td>{[ rule.type ]}</td>
+  <td>{[ rule.turn_on ]}</td>
+  <td>{[ rule.info ]}</td>
+
+</tr>
+</table>

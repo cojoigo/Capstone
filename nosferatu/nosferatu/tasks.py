@@ -71,25 +71,19 @@ def get_node_status_task(node_id):
     }
 
 
-@celery.task
-def test_node_task(node_id, stop=False):
-    if stop:
-        test = 'ON'
+def test_node_task(args):
+    if args['action'] == 'start':
+        test = 'START'
     else:
-        test = 'OFF'
+        test = 'STOP'
 
-    node = Node.query.filter_by(id=node_id).first()
-
-    ip_str = str(node.ip_addr)
-    mac = str(node.mac_addr)
-
-    with task_lock(key=mac, timeout=15):
-        change_node_status(ip_str, "TEST", test)
+    with task_lock(key=args['mac'], timeout=15):
+        change_node_status(args['ip'], "TEST", test)
 
 
 def find_nodes_task():
-    nodes = find_nodes()
-    '''
+    # nodes = find_nodes()
+    # '''
     nodes = {
         'a0:2b:03:c3:f3:12': {
             'ip': '1.2.3.4',
@@ -107,7 +101,7 @@ def find_nodes_task():
             'on': True,
         },
     }
-    '''
+    # '''
     return nodes
 
 
@@ -140,8 +134,7 @@ def change_motion_task(node_id, status):
 #######################################
 # Database calls
 #######################################
-@celery.task(bind=True)
-def add_node_task(self, node, user_id):
+def add_node_task(node, user_id):
     try:
         if not node['name']:
             raise Exception("Invalid Name")
@@ -159,8 +152,7 @@ def add_node_task(self, node, user_id):
         log.exception(e)
 
 
-@celery.task(bind=True)
-def get_nodes_task(self):
+def get_nodes_task():
     nodes = Node.query.all()
     result = {}
     for i, node in enumerate(nodes):
@@ -168,13 +160,11 @@ def get_nodes_task(self):
     return result
 
 
-@celery.task(bind=True)
-def get_node_task(self, node_id):
+def get_node_task(node_id):
     node = Node.query.get(node_id)
     return node.to_json()
 
 
-@celery.task
 def add_rule_task(node_id, rule):
     log.debug(rule)
 
@@ -230,7 +220,6 @@ def delete_node_task(node_id):
     return {'result': False}
 
 
-@celery.task
 def get_all_rules_task(node_id):
     rules = Rule.query.filter_by(node=node_id).all()
 
@@ -242,15 +231,35 @@ def get_all_rules_task(node_id):
     return {}
 
 
-@celery.task
 def get_rule_task(node_id, rule_id):
     rule = Rule.query.filter_by(node=node_id, id=rule_id).first()
     if rule:
+        if rule.type == 'Schedule':
+            if rule.sched_type == 'manual':
+                print(rule.sched_hour)
+                info = 'at {}:{:02} {AMPM}'.format(
+                    ((rule.sched_hour + 11) % 12) + 1,
+                    rule.sched_minute,
+                    AMPM='AM' if rule.sched_hour < 12 else 'PM'
+                )
+            else:
+                info = rule.sched_time_of_day
+
+        elif rule.type == 'Event':
+            info = 'when `{node}` is {status}'.format(
+                node=Node.query.get(rule.event_node).name,
+                status='on' if rule.event_node_state else 'off'
+            )
+        else:
+            info = rule.sched_type
+
         return {
             'id': rule.id,
             'name': rule.name,
-            'turn_on': str(bool(rule.turn_on)),
-            'days': [day.title() for day in rule.days.split(',')],
+            'turn_on': 'Turn ' + ('on' if bool(rule.turn_on) else 'off'),
+            'days': [day.title() for day in rule.days.split('.')],
+            'type': rule.type,
+            'info': info,
         }
 
 

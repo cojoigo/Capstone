@@ -27,48 +27,19 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/nodes/get/', methods=['GET'])
+@app.route('/nodes/get', methods=['GET'])
 @login_required
 def get_nodes():
-    job = get_nodes_task.delay()
-    return job.id
+    return jsonify(get_nodes_task())
 
 
-@app.route('/nodes/get/<job_id>', methods=['GET'])
-@login_required
-def nodes_jobs(job_id):
-    print('get all the nodes', job_id)
-
-    job = get_nodes_task.AsyncResult(job_id)
-    if job.ready():
-        print('  - all the gotten nodes', job_id, job.result)
-        return jsonify(job.result)
-    else:
-        return 'Job is not ready', 202
-
-
-@app.route('/nodes/add/', methods=['POST'])
+@app.route('/nodes/add', methods=['POST'])
 @login_required
 def add_node():
     print('Beginning add node', request.json)
     node = request.json
-    job = add_node_task.delay(node, current_user.id)
-    print(' - adding job', job.id)
-    return job.id
-
-
-@app.route('/nodes/add/<job_id>', methods=['GET'])
-@login_required
-def node_adding_jobs(job_id):
-    print('adding single node', job_id)
-
-    job = add_node_task.AsyncResult(job_id)
-    job.state
-    if job.ready():
-        print('  - added node', job_id, job.result['id'])
-        return jsonify(id=job.result['id'])
-    else:
-        return 'ERROR', 202
+    result = add_node_task(node, current_user.id)
+    return jsonify(id=result['id'])
 
 
 @app.route('/nodes/find', methods=['POST'])
@@ -77,44 +48,21 @@ def search_for_nodes():
     return jsonify(find_nodes_task())
 
 
-@app.route('/nodes/<node_id>', methods=['GET', 'DELETE'])
+@app.route('/nodes/<int:node_id>', methods=['GET', 'DELETE'])
 @login_required
 def get_node(node_id):
     if request.method == 'GET':
         print('Getting the node', node_id)
-        job = get_node_task.delay(node_id)
-        print(' - job id', job.id)
-        return job.id
+        return jsonify(get_node_task(node_id))
     elif request.method == 'DELETE':
         print('Deleting the node')
         return jsonify(delete_node_task(node_id))
 
 
-@app.route('/nodes/<int:node_id>/jobs/<job_id>', methods=['GET'])
+@app.route('/nodes/test', methods=['POST'])
 @login_required
-def node_jobs(node_id, job_id):
-    print(' - Get Node Task', node_id, job_id)
-
-    job = get_node_task.AsyncResult(job_id)
-    print('   - job state', job.state)
-    if job.ready():
-        print('    - this singluar gotten node', job_id, job.result)
-        return jsonify(job.result)
-    else:
-        return 'Job is not ready', 202
-
-
-@app.route('/nodes/<node_id>/test/start', methods=['GET'])
-@login_required
-def test_start(node_id):
-    test_node_task.delay(node_id)
-    return 'SUCCESS', 200
-
-
-@app.route('/nodes/<node_id>/test/stop', methods=['GET'])
-@login_required
-def test_stop(node_id):
-    test_node_task.delay(node_id, stop=True)
+def test_start():
+    test_node_task(request.json)
     return 'SUCCESS', 200
 
 
@@ -138,69 +86,29 @@ def get_node_status(node_id):
     return jsonify(get_node_status_task(node_id))
 
 
-@app.route('/nodes/<node_id>/rules', methods=['POST', 'GET'])
+@app.route('/nodes/<node_id>/rules', methods=['GET', 'POST'])
 @login_required
 def add_rule(node_id):
-    if request.method == 'POST':
+    if request.method == 'GET':
+        print('Beginning get all rules', node_id)
+        result = get_all_rules_task(node_id)
+        print('    - all the rules', result)
+        return jsonify(result)
+    elif request.method == 'POST':
         print('Beginning add rule', node_id, request.json)
         rule = request.json
-        job = add_rule_task.delay(node_id, rule)
-        return job.id
-
-    elif request.method == 'GET':
-        print('Poll add rule', node_id, request.args)
-
-        job_id = request.args.get('job_id')
-        job = add_rule_task.AsyncResult(job_id)
-        print('   - job state', job.state)
-        if job.ready():
-            print('    - this added rule', job_id, job.result)
-            return jsonify(job.result)
-        else:
-            return 'Job is not ready', 202
+        return jsonify(add_rule_task(node_id, rule))
 
 
-@app.route('/nodes/<int:node_id>/rules/all', methods=['POST', 'GET'])
-@login_required
-def get_all_rules(node_id):
-    if request.method == 'POST':
-        job = get_all_rules_task.delay(node_id)
-        print('Beginning get all rules', node_id, job.id)
-        return job.id
-
-    elif request.method == 'GET':
-        print('Poll get all rules', node_id, request.args)
-
-        job_id = request.args.get('job_id')
-        job = get_all_rules_task.AsyncResult(job_id)
-        print('   - job state', job.state)
-        if job.ready():
-            print('    - all the rules', job_id, job.result)
-            return jsonify(job.result)
-        else:
-            return 'Job is not ready', 202
-
-
-@app.route('/nodes/<int:node_id>/rules/<int:rule_id>', methods=['POST', 'GET', 'DELETE'])
+@app.route('/nodes/<int:node_id>/rules/<int:rule_id>', methods=['GET', 'DELETE'])
 @login_required
 def get_single_rule(node_id, rule_id):
-    if request.method == 'POST':
-        print('Beginning add rule', node_id)
-        job = get_rule_task.delay(node_id, rule_id)
-        return job.id
+    if request.method == 'GET':
+        print('Beginning get rule', node_id)
+        result = get_rule_task(node_id, rule_id)
+        print('    - this singluar gotten node', result)
+        return jsonify(result)
 
-    elif request.method == 'GET':
-        print('Poll add rule', node_id, request.args)
-
-        job_id = request.args['job_id']
-        job = get_rule_task.AsyncResult(job_id)
-        print('   - job state', job.state)
-        if job.ready():
-            print('    - this singluar gotten node', job_id, job.result)
-            return jsonify(job.result)
-        else:
-            return 'Job is not ready', 202
     elif request.method == 'DELETE':
         print('Deleting rule', node_id, request.args)
-
         return jsonify(delete_rule_task(node_id, rule_id))

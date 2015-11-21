@@ -64,24 +64,37 @@ body {
 
 .relayOn {
   background-color: #F0FF10;
-}
 
-.relayOn:focus {
-    background-color: #F0FF10;
-    border-color: #F0FF10;
-    outline-color: #F0FF10;
+  &:focus {
+      background-color: #F0FF10;
+      border-color: #F0FF10;
+      outline-color: #F0FF10;
+  }
 }
 
 .relayOff {
   background-color: #777777;
-}
 
-.relayOff:focus {
+  &:disabled, &:focus {
     background-color: #777777;
     border-color: #777777;
     outline-color: #777777;
+  }
 }
 
-button[disabled] {
-  background-color: #777777;
+.deleteBtn {
+  background-color: #691515;
+  color: #FFFFFF;
+  padding: 4px 8px 4px 8px;
+
+  &:hover {
+    background-color: #461010;
+  }
+}
+
+tab-heading {
+  .deleteBtn {
+    float: right;
+    margin: -5px -20px;
+  }
 }

@@ -125,6 +125,7 @@ def change_node_status(node_ip, request_type, status, send_port=DEFAULT_SEND_POR
 
     addr = (node_ip, send_port)
     sender = socket(AF_INET, SOCK_STREAM)
+    sender.settimeout(5)
 
     try:
         sender.connect(addr)
@@ -138,9 +139,12 @@ def change_node_status(node_ip, request_type, status, send_port=DEFAULT_SEND_POR
         print("Could not send message to {}".format(node_ip))
         return 4
 
-    sender.settimeout(3)
     try:
-        status = sender.recv(1024).decode()
+        status = ''
+        buffer = True
+        while buffer:
+            buffer = sender.recv(1024)
+            status = status + buffer.decode()
     except:
         print("Waiting for message timed out on {}".format(node_ip))
         return 5
@@ -176,7 +180,11 @@ def get_node_status(ip, status_type="ALL", send_port=DEFAULT_SEND_PORT):
         raise CommunicationException('Error sending status request to {}'.format(ip))
 
     try:
-        status = sender.recv(1024).decode()
+        status = ''
+        buffer = True
+        while buffer:
+            buffer = sender.recv(1024)
+            status = status + buffer.decode()
     except:
         raise CommunicationException('Waiting for status reply timed out on {}'.format(ip))
 

@@ -22,7 +22,11 @@
     </div>
   </td>
   <td>{[ rule.type ]}</td>
-  <td>{[ rule.turn_on ]}</td>
+  <td>
+    <div ng-repeat="action in rule.turn_on">
+      {[ action ]}
+    </div>
+  </td>
   <td>{[ rule.info ]}</td>
 
 </tr>

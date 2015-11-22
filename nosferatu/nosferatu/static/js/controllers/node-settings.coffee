@@ -92,7 +92,7 @@ angular.module('nosferatuApp').controller('nodeSettingsController',
                     ), errFunc
                 )
             poller()
-        # @checkNodeStatus()
+        @checkNodeStatus()
 
         return
     ]

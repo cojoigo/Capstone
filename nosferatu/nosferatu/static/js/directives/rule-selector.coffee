@@ -6,11 +6,12 @@ angular.module('nosferatuApp').directive('ruleSelector', () ->
             result = (
                 (not @ruleName) or
                 (not @daysOfWeekSelected.length) or
-                (if (@scheduleTimeType is 'auto') then (not @scheduleZipCode) else false)
+                (if @ruleType is 'Schedule' then (if (@scheduleTimeType is 'auto') then (not @scheduleZipCode) else false) else false) or
+                (if @ruleType is 'Event' then (not @foreignNode) else false)
             )
             return result
 
-        @ruleTypes = ['Schedule', 'Event', 'Motion']
+        @ruleTypes = ['Schedule', 'Event']
         @daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
         am_pm = (i) ->
             if i < 12
@@ -19,7 +20,7 @@ angular.module('nosferatuApp').directive('ruleSelector', () ->
                 return 'PM'
         @hoursInDay = {}
         for i in [0..24]
-            str = "#{((i + 11) % 12) + 1}:00 #{am_pm(i)}"
+            str = "#{((i + 11) % 12) + 1} #{am_pm(i)}"
             @hoursInDay[str] = i
         @hoursInDayArr = Object.keys(@hoursInDay)
         @minutesInDay = [0, 15, 30, 45]
@@ -39,16 +40,11 @@ angular.module('nosferatuApp').directive('ruleSelector', () ->
         @hourInDay = @hoursInDayArr[0]
         @minuteInDay = @minutesInDay[0]
 
-        @ruleTurnOn = true
-        @ruleTurnOnStr = 'On'
-        @scheduleActionChange = () ->
-            if @ruleTurnOn
-                @ruleTurnOnStr = 'On'
-            else
-                @ruleTurnOnStr = 'Off'
+        @ruleTurnOn = 'unchanged'
+        @ruleMotionTurnOn = 'unchanged'
 
         @foreignNode = @foreignNodes[0]
-        @foreignNodeStatus = 'Is On'
+        @foreignNodeStatus = 'on'
 
         @eventNode = (node) ->
             if node?
@@ -62,6 +58,7 @@ angular.module('nosferatuApp').directive('ruleSelector', () ->
                 'name': @ruleName
                 'type': @ruleType
                 'turn_on': @ruleTurnOn
+                'turn_motion_on': @ruleMotionTurnOn
                 'days': @daysOfWeekSelected
                 'sched_type': @scheduleTimeType
 

@@ -101,21 +101,21 @@
       </div>
 
       <div ng-show="rs.ruleType === 'Event'">
-        <label>Reference to Node</label>
+        <label>When the node...</label>
         <select
           ng-options="n.name for n in rs.foreignNodes | notthesame:rs"
           ng-model="rs.foreignNode"
         ></select>
 
         <br />
-        <label>Status of that node</label>
+        <label>changes its status to</label>
         <label>
           <input
             type="radio"
             name="foreignNodeStatus"
             value="on"
             ng-model="rs.foreignNodeStatus" />
-          Is On
+          On
           <br />
         </label>
 
@@ -125,23 +125,67 @@
             name="foreignNodeStatus"
             value="off"
             ng-model="rs.foreignNodeStatus" />
-          Is Off
+          Off
           <br />
         </label>
       </div>
-
-      <div ng-show="rs.ruleType === 'Motion'">
-      </div>
     </div>
 
-    <div class="small-4 columns">
+    <div class="row">
       <div class="small-4 columns">
-        <label for="ruleAddTurnOn">Turn&nbsp;{[ rs.ruleTurnOnStr ]}</label>
-        <input
-          type="checkbox"
-          id="ruleAddTurnOn"
-          ng-model="rs.ruleTurnOn"
-          ng-change="rs.scheduleActionChange()"/>
+        <label for="ruleAddTurnOn">Light&nbsp;{[ rs.ruleTurnOn ]}</label>
+        <label>
+          <input
+            type="radio"
+            id="ruleAddTurnOn"
+            value='unchanged'
+            ng-model="rs.ruleTurnOn" />
+          Unchanged
+        </label>
+        <label>
+          <input
+            type="radio"
+            id="ruleAddTurnOn"
+            value='on'
+            ng-model="rs.ruleTurnOn" />
+          On
+        </label>
+        <label>
+          <input
+            type="radio"
+            id="ruleAddTurnOn"
+            value='off'
+            ng-model="rs.ruleTurnOn" />
+          Off
+        </label>
+
+        <br />
+
+        <label for="ruleMotionTurnOn">Motion&nbsp;{[ rs.ruleMotionTurnOn ]}</label>
+        <label>
+          <input
+            type="radio"
+            id="ruleMotionTurnOn"
+            value='unchanged'
+            ng-model="rs.ruleMotionTurnOn" />
+          Unchanged
+        </label>
+        <label>
+          <input
+            type="radio"
+            id="ruleMotionTurnOn"
+            value='on'
+            ng-model="rs.ruleMotionTurnOn" />
+          On
+        </label>
+        <label>
+          <input
+            type="radio"
+            id="ruleMotionTurnOn"
+            value='off'
+            ng-model="rs.ruleMotionTurnOn" />
+          Off
+        </label>
       </div>
     </div>
   </div>

@@ -14,6 +14,27 @@ log = logging.getLogger()
 #######################################
 # Rules Poll
 #######################################
+def change_state(node, rule, action_field, thing):
+    ip = str(node.ip_addr)
+    mac = str(node.mac_addr)
+
+    field = getattr(rule, action_field)
+    if field is not None:
+        if field:
+            action = 'ON'
+        else:
+            action = 'OFF'
+
+        with task_lock(key=mac, timeout=10):
+            status = change_node_status(ip, thing, action)
+
+        status = status
+        if thing == 'RELAY':
+            db_update_relay(node.id, status)
+        elif thing == 'MOTION':
+            db_update_motion(node.id, status)
+
+
 @celery.task
 def rules_poll():
     rules = Rule.query.filter_by(type='Event')
@@ -28,22 +49,11 @@ def rules_poll():
     for node in nodes:
         node_info[node.id] = node
 
-    for r in rules:
-        node = node_info[r.eventNode]
-        if node.status == r.event_node_state:
-            ip_str = str(node.ip_addr)
-            mac = str(node.mac_addr)
-
-            if r.turn_on:
-                action = 'ON'
-            else:
-                action = 'OFF'
-
-            with task_lock(key=mac, timeout=10):
-                status = change_node_status(ip_str, 'RELAY', action)
-
-            led_status, motion_status, relay_status = status
-            db_update_relay(node.id, relay_status)
+    for rule in rules:
+        node = node_info[rule.node.id]
+        if node.relay_status != node_info[rule.event_node.id]:
+            change_state(node, rule, 'turn_on', 'RELAY')
+            change_state(node, rule, 'turn_motion_on', 'MOTION')
 
 
 #######################################
@@ -82,8 +92,8 @@ def test_node_task(args):
 
 
 def find_nodes_task():
-    # nodes = find_nodes()
-    # '''
+    nodes = find_nodes()
+    '''
     nodes = {
         'a0:2b:03:c3:f3:12': {
             'ip': '1.2.3.4',
@@ -101,7 +111,7 @@ def find_nodes_task():
             'on': True,
         },
     }
-    # '''
+    '''
     return nodes
 
 
@@ -170,22 +180,31 @@ def add_rule_task(node_id, rule):
 
     try:
         # Validate the zipcode
-        zip_code = rule.get('zip_code')
-        if zip_code is not None:
-            for digit in zip_code:
-                try:
-                    int(digit)
-                except ValueError:
-                    zip_code = 0
-            if not zip_code:
-                zip_code = 0
-                if rule.get('sched_type') == 'auto':
+        if rule.get('sched_type') == 'auto':
+            zip_code = rule.get('zip_code')
+            if zip_code is not None:
+                for digit in zip_code:
+                    try:
+                        zip_code = int(digit)
+                    except ValueError:
+                        zip_code = None
+                if not zip_code:
                     raise Exception("Error no Zipcode")
+        else:
+            zip_code = None
+
+        def change_map(value):
+            return {
+                'on': True,
+                'off': False,
+                'unchanged': None,
+            }[value]
 
         rule = Rule(
             name=rule['name'],
             type=rule['type'],
-            turn_on=rule['turn_on'],
+            turn_on=change_map(rule['turn_on']),
+            turn_motion_on=change_map(rule['turn_motion_on']),
             days='.'.join(rule['days']),
 
             sched_type=rule.get('sched_type'),
@@ -195,7 +214,7 @@ def add_rule_task(node_id, rule):
             sched_time_of_day=rule.get('time_of_day'),
 
             event_node=rule.get('event_node'),
-            event_node_status=rule.get('event_node_status'),
+            event_node_state=rule.get('event_node_status'),
 
             node=node_id,
         )
@@ -253,10 +272,20 @@ def get_rule_task(node_id, rule_id):
         else:
             info = rule.sched_type
 
+        turn_on = []
+        if rule.turn_on is not None:
+            turn_on.append('Turn light {}'.format('on' if rule.turn_on else 'off'))
+        else:
+            turn_on.append('Light unchanged')
+        if rule.turn_motion_on is not None:
+            turn_on.append('Turn motion {}'.format('on' if rule.turn_motion_on else 'off'))
+        else:
+            turn_on.append('Motion unchanged')
+
         return {
             'id': rule.id,
             'name': rule.name,
-            'turn_on': 'Turn ' + ('on' if bool(rule.turn_on) else 'off'),
+            'turn_on': turn_on,
             'days': [day.title() for day in rule.days.split('.')],
             'type': rule.type,
             'info': info,

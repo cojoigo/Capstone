@@ -6,4 +6,4 @@ export PROJECT_HOME=~/Capstone/nosferatu
 source /usr/local/bin/virtualenvwrapper.sh
 
 workon nosferatu
-celery -A nosferatu.celery worker
+celery -A nosferatu.celery worker --beat --loglevel DEBUG

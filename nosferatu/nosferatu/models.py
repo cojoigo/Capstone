@@ -16,6 +16,7 @@ class Node(db.Model):
     ip_addr = db.Column(postgresql.INET)
 
     relay_status = db.Column(db.Boolean, default=False)
+    motion_status = db.Column(db.Boolean, default=False)
 
     user_id = db.Column(db.Integer, ForeignKey('users.id'))
     rules = relationship('Rule', backref='nodes', foreign_keys='[Rule.node]')
@@ -39,11 +40,6 @@ class Node(db.Model):
         }
 
 
-# schedule_types = ['Auto', 'Manual']
-# time_of_day = ['Sunset', 'Sunrise']
-# ScheduleTypes(*schedule_types, name='ScheduleTypes')
-# TimeOfDay(*time_of_day, name='TimeOfDay')
-
 class Rule(db.Model):
     __tablename__ = 'rules'
 
@@ -51,7 +47,8 @@ class Rule(db.Model):
     name = db.Column(db.String(255), primary_key=True, nullable=False)
 
     type = db.Column(db.String(255), nullable=False)
-    turn_on = db.Column(db.Boolean(), nullable=False)
+    turn_on = db.Column(db.Boolean(), nullable=True)
+    turn_motion_on = db.Column(db.Boolean(), nullable=True)
     days = db.Column(db.String(56), nullable=False)
 
     # Schedules

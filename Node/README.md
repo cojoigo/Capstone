@@ -21,8 +21,8 @@ Using Main directory for the current project, the OLD directory is only for refe
 ## Other Documentation
 Helpful links:
 
-    [Reference](https://github.com/esp8266/Arduino/blob/master/doc/reference.md)
-    [NodeMCU API](https://github.com/nodemcu/nodemcu-firmware/wiki/nodemcu_api_en)
-    [Devkit Github](https://github.com/nodemcu/nodemcu-devkit-v1.0)
-    [Board User Manual](https://smartarduino.gitbooks.io/user-manual-for-esp-12e-devkit/content/index.html)
-    [Board Development Manual](https://smartarduino.gitbooks.io/development-of-nodemcu/content/)
+[Reference](https://github.com/esp8266/Arduino/blob/master/doc/reference.md)
+[NodeMCU API](https://github.com/nodemcu/nodemcu-firmware/wiki/nodemcu_api_en)
+[Devkit Github](https://github.com/nodemcu/nodemcu-devkit-v1.0)
+[Board User Manual](https://smartarduino.gitbooks.io/user-manual-for-esp-12e-devkit/content/index.html)
+[Board Development Manual](https://smartarduino.gitbooks.io/development-of-nodemcu/content/)

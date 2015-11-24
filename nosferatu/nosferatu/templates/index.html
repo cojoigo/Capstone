@@ -50,8 +50,11 @@
               </div>
               <div class="small-4 columns">
                 <button type="button" ng-click="settings.changeMotion()">
-                  Toggle Motion (Currently {[settings.motionStatus]})
+                  Toggle Motion ({[settings.motionStatus]})
                 </button>
+                <div>
+                  <label style="float: left;">Motion timeout (seconds):</label>
+                  <input type="text" placeholder="5" max-width="30px" style="float: right;"></input>
               </div>
               <div class="small-4 columns">
               </div>

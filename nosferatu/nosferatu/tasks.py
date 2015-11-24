@@ -83,8 +83,11 @@ def get_node_status_task(node_id):
             print(e)
             status = ('Erroar', 'Erroar', 'Erroar')
 
-    led_status, motion_status, relay_status = status
-    db_update_relay(node_id, relay_status)
+    try:
+        led_status, motion_status, relay_status = status
+        db_update_relay(node_id, relay_status)
+    except:
+        pass
 
     return {
         'led': led_status,

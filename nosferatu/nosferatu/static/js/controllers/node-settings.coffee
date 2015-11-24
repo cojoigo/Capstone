@@ -70,6 +70,8 @@ angular.module('nosferatuApp').controller('nodeSettingsController',
         @getRules()
 
         @checkNodeStatus = () ->
+            # if not self.node.active? or self.node.active
+            #     return
             time = ''
             poller = () ->
                 $log.log("Checking Node(#{self.node.id})'s status'")
@@ -88,7 +90,7 @@ angular.module('nosferatuApp').controller('nodeSettingsController',
                                 self.motionStatus = results.data.motion
 
                         # Continue to call the poller every 5 seconds until its canceled
-                        time = $timeout(poller, 5000)
+                        time = $timeout(poller, 1000)
                     ), errFunc
                 )
             poller()

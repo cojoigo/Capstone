@@ -14,11 +14,7 @@ log = logging.getLogger()
 #######################################
 # Rules Poll
 #######################################
-def change_state(node, rule, action_field, thing):
-    ip = str(node.ip_addr)
-    mac = str(node.mac_addr)
-    field = getattr(rule, action_field)
-
+def change_state(affected_node, node_to_check, field, thing, rule):
     # If field is `None` the action is "unchanged"
     if field is not None:
         # Otherwise it means on or off
@@ -26,13 +22,21 @@ def change_state(node, rule, action_field, thing):
         if field:
             action = 'ON'
 
-        with task_lock(key=mac, timeout=10):
-            status = change_node_status(ip, thing, action)
+        ip = str(affected_node.ip_addr)
+        mac = str(affected_node.mac_addr)
 
         if thing == 'RELAY':
-            db_update_relay(node.id, status)
+            if affected_node.relay_status != field:
+                with task_lock(key=mac, timeout=10):
+                    status = change_node_status(ip, thing, action)
+                db_update_relay(affected_node.id, status)
+
         elif thing == 'MOTION':
-            db_update_motion(node.id, status)
+            if affected_node.motion_status != field:
+                with task_lock(key=mac, timeout=10):
+                    status = change_node_status(ip, thing, action)
+                db_update_motion(affected_node.id, status)
+
 
 
 @celery.task
@@ -53,13 +57,15 @@ def rules_poll():
 
     # For each rule
     for rule in rules:
-        # if the node that the rule is pointing to's status
-        # is the status we intended to switch on
-        node = node_info[rule.event_node.id]
-        if node.relay_status == rule.event_node_state:
-            change_state(node, rule, 'turn_on', 'RELAY')
-        if node.motion_status == rule.event_node_state:
-            change_state(node, rule, 'turn_motion_on', 'MOTION')
+        affected_node = node_info[rule.node]
+        node_to_check = node_info[rule.event_node]
+        if affected_node and node_to_check:
+            # If `node_to_check` has the state of `event_node_state` then `affected_node`
+            # should change ITS state to the value of `turn_on`
+            if node_to_check.relay_status == rule.event_node_state:
+                change_state(affected_node, node_to_check, rule.turn_on, 'RELAY', rule)
+            if node_to_check.motion_status == rule.event_node_state:
+                change_state(affected_node, node_to_check, rule.turn_motion_on, 'MOTION', rule)
 
 
 #######################################
@@ -237,6 +243,12 @@ def add_rule_task(node_id, rule):
 def delete_node_task(node_id):
     try:
         node = Node.query.get(node_id)
+        if node.rules:
+            for rule in node.rules:
+                db.session.delete(rule)
+
+        rules = Rule.query.filter_by(event_node=node_id).delete()
+
         db.session.delete(node)
         db.session.commit()
         return {'result': node.id}

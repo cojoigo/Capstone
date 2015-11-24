@@ -17,18 +17,18 @@ log = logging.getLogger()
 def change_state(node, rule, action_field, thing):
     ip = str(node.ip_addr)
     mac = str(node.mac_addr)
-
     field = getattr(rule, action_field)
+
+    # If field is `None` the action is "unchanged"
     if field is not None:
+        # Otherwise it means on or off
+        action = 'OFF'
         if field:
             action = 'ON'
-        else:
-            action = 'OFF'
 
         with task_lock(key=mac, timeout=10):
             status = change_node_status(ip, thing, action)
 
-        status = status
         if thing == 'RELAY':
             db_update_relay(node.id, status)
         elif thing == 'MOTION':
@@ -38,21 +38,27 @@ def change_state(node, rule, action_field, thing):
 @celery.task
 def rules_poll():
     rules = Rule.query.filter_by(type='Event')
-    ids = []
 
+    # Get all the nodes we could reference below
+    ids = set()
     for rule in rules:
-        ids.append(rule.event_node)
+        ids.add(rule.node)
+        ids.add(rule.event_node)
 
-    nodes = Node.query.filter(Node.id.in_(ids)) if ids else []
-
+    # Map node id to node object
     node_info = {}
+    nodes = Node.query.filter(Node.id.in_(ids)) if ids else []
     for node in nodes:
         node_info[node.id] = node
 
+    # For each rule
     for rule in rules:
-        node = node_info[rule.node.id]
-        if node.relay_status != node_info[rule.event_node.id]:
+        # if the node that the rule is pointing to's status
+        # is the status we intended to switch on
+        node = node_info[rule.event_node.id]
+        if node.relay_status == rule.event_node_state:
             change_state(node, rule, 'turn_on', 'RELAY')
+        if node.motion_status == rule.event_node_state:
             change_state(node, rule, 'turn_motion_on', 'MOTION')
 
 

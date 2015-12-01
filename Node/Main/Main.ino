@@ -8,16 +8,22 @@ IPAddress noip(0,0,0,0);
 
 String webpage = "<!DOCTYPE html> <html> <body> <form> SSID: <br> <input type=\"text\" name=\"SSID\"> <br> Password: <br> <input type=\"text\" name=\"Password\"> <br> <br> <input type=\"submit\" value=\"Submit\"> </form> </body> </html>";
 unsigned long int counter;
+unsigned long int blinkCounter;
 
 int LED = D0;
 int pirPin = D1;
 int Relay = D2;
+int Button = D3;
+int LED2 = D4;
 
 int motionTime; //global timer for motion
 int motionEnable; //local motion enable, for timing etc
+int relayDelay;
 int timeout; //how long we want to set the motion timeout to
 
 int isServer = 0; //if we are in server mode
+int testMode;
+
 WiFiServer server(12001);
 WiFiServer server2(80);
 WiFiClient client1;
@@ -30,20 +36,23 @@ void setup()
 //  if (WiFi.localIP() == noip)
 //  {
     //broadcastWiFi();
-    //getWiFiInfo();
+    //getFileInfo();
     connectWiFi();
 //  }
   pinMode(LED, OUTPUT);
   digitalWrite(LED, HIGH); //turn off LED it is bright
+  pinMode(pirPin, INPUT); //motion sensor input
+  pinMode(Button, INPUT); //button input
+  pinMode(Relay, OUTPUT);
+  digitalWrite(Relay, LOW);
   counter = millis();
   motionEnable = 1;
+  testMode = 0;
+  blinkCounter = 0;
   timeout = 10000;
-  pinMode(pirPin, INPUT); //motion sensor input
-  pinMode(Relay, OUTPUT);
-  digitalWrite(Relay, LOW);  
 }
 
-void getWiFiInfo()
+void getFileInfo()
 {
   File f = SPIFFS.open("/wifi.txt","r");
   if (!f) {
@@ -52,9 +61,14 @@ void getWiFiInfo()
   }
   String wifiInfo = f.readString();
   Serial.println("Read in from file: \n" + wifiInfo);
-  int delimiter = wifiInfo.indexOf('\n');
-  ID = wifiInfo.substring(0, delimiter);
-  PASS = wifiInfo.substring(delimiter+1);
+  int line1 = wifiInfo.indexOf('\n');
+  int line2 = wifiInfo.indexOf('\n',line1);
+  int line3 = wifiInfo.indexOf('\n',line2);
+  ID = wifiInfo.substring(0, line1);
+  PASS = wifiInfo.substring(line1+1,line2);
+  motionEnable = wifiInfo.substring(line2+1, line3).toInt();
+  timeout = wifiInfo.substring(line3+1).toInt();
+  Serial.println(ID+" "+PASS+" "+motionEnable+" "+timeout);
   //char* sid;
   //char* pas;
   //ID.toCharArray(sid,32);
@@ -83,7 +97,6 @@ void saveWiFiInfo(String html)
 
 void connectWiFi()
 {
-  getWiFiInfo();
   Serial.println("initial IP address: ");
   Serial.println(WiFi.localIP());
   if (WiFi.localIP() != noip)
@@ -205,15 +218,33 @@ String parseCmd(String command)
   }
   else if (cmd1 == "STATUS")
   {
-    response = CtrlLED("STATUS")+"&"+CtrlMotion("STATUS")+"&"+CtrlRelay("STATUS");
+    response = CtrlLED("STATUS")+"&"+CtrlMotion("STATUS")+"&"+CtrlRelay("STATUS")+"&"+String(timeout);
     return response;
   }
   else if (cmd1 == "TIMEOUT")
   {
     timeout = cmd2.toInt();
     timeout = timeout *1000;
-    Serial.println("timeout now set to: " + String(timeout) + "s");
+    Serial.println("timeout now set to: " + String(timeout) + "ms");
     return "OK";
+  }
+  else if (cmd1 == "TEST")
+  {
+    if (cmd2 == "START")
+    {
+      CtrlMotion("OFF");
+      blinkCounter = 1000 + millis();
+      testMode = 1;
+      Serial.println("Now testing");
+      return "OK";
+    }
+    else
+    {
+      CtrlMotion("ON");
+      testMode = 0;
+      Serial.println("Done testing");
+      return "OK";
+    }
   }
   response = "Error parsing";
   return response;  
@@ -221,10 +252,19 @@ String parseCmd(String command)
 
 void loop() 
 {
+  //if (digitalRead(Button) == HIGH)
+  //{//Toggle Relay state and disable motion
+  //  CtrlRelay("TOGGLE");
+  //  CtrlMotion("OFF");
+  //}
   if (isServer)
   {
     serverLoop();
     return;
+  }
+  if (testMode && (blinkCounter < millis()))
+  {
+    testEverything();
   }
   if (WiFi.status() == 6) //if wifi gets disconnected
   {
@@ -236,22 +276,18 @@ void loop()
   {
     Serial.println("");
     //Serial.println("new client");
-    unsigned long int time2 = millis();
-    //client1.println(webpage);
     while(!client1.available())
     {
       delay(1);
     }
-    Serial.println("Time to read is " + String((millis()-time2)));
     String command = client1.readStringUntil('.');
     Serial.println(command);
     client1.flush();
     String response = parseCmd(command);
-    Serial.println("Responding with: " + response + " length is " + String(response.length()));
+    Serial.println("Responding with: " + response);
     client1.println(response);
     client1.stop();
     //Serial.println("closing client");
-    Serial.println("Time open is " + String((millis()-time2)));
     return;
   }
 }
@@ -307,15 +343,18 @@ void motionSensor()
 {
   if (motionEnable)
   {
-    motionTimer("CHECK");
-    int pirVal = digitalRead(pirPin);
-    if (pirVal == LOW)
+    if (relayDelay <= millis())
     {
-      //Serial.println("Motion Detected");
-      CtrlLED("ON");
-      CtrlRelay("ON");
-      motionTimer("SET");
-      return;
+      motionTimer("CHECK");
+      int pirVal = digitalRead(pirPin);
+      if (pirVal == LOW)
+      {
+        //Serial.println("Motion Detected");
+        CtrlLED("ON");
+        CtrlRelay("ON");
+        motionTimer("SET");
+        return;
+      }
     }
   }
 }
@@ -333,6 +372,7 @@ void motionTimer(String cmd)
       //Serial.println("Timer Expired");
       CtrlLED("OFF");
       CtrlRelay("OFF");
+      relayDelay = millis() + 1750;
     }
   }
   return;
@@ -362,3 +402,11 @@ String CtrlRelay(String cmd)
   }
   return response;
 }
+
+void testEverything()
+{
+  blinkCounter = 1500 + millis();
+  CtrlLED("TOGGLE");
+  CtrlRelay("TOGGLE");
+}
+

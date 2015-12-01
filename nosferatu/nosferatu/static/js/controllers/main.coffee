@@ -41,6 +41,7 @@ angular.module('nosferatuApp').controller('mainController',
                 $log.log("  - success: ", results.data)
                 self.nodes[results.data.id] = results.data
                 self.nodes[results.data.id]['deleted'] = false
+                self.nodes[results.data.id]['active'] = false
 
                 # Its added now, so doesnt need to be found
                 $log.log(self.foundNodes)
@@ -52,6 +53,9 @@ angular.module('nosferatuApp').controller('mainController',
                     self.findingNodes = false
                 self.submitButtonText = submitButtonTexts[self.findingNodes]
             ).catch(errFunc)
+
+        this.paneChanged = (pane) ->
+            $log.log("ASDFL", pane)
 
         this.findNodes = () ->
             $log.log('Searching for new nodes')

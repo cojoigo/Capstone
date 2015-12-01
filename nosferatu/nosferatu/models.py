@@ -74,7 +74,7 @@ class Rule(db.Model):
             setattr(self, key, value)
 
     def __repr__(self):
-        return '<id {}, {}>'.format(self.id, self.username)
+        return '<id {}, {}>'.format(self.id, self.name)
 
 
 class User(db.Model, UserMixin):

@@ -36,6 +36,13 @@ angular.module('nosferatuApp').directive('foundNode', () ->
 
             $log.log("Saving node #{self.node.ip}", self)
 
+            data = {
+                action: 'stop',
+                ip: self.node.ip,
+                mac: self.node.mac,
+            }
+            $http.post('/nodes/test', data)
+
             self.updateSaveText(true)
             sendInfo = {
                 ip: self.node.ip,

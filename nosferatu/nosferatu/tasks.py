@@ -14,46 +14,58 @@ log = logging.getLogger()
 #######################################
 # Rules Poll
 #######################################
-def change_state(node, rule, action_field, thing):
-    ip = str(node.ip_addr)
-    mac = str(node.mac_addr)
-
-    field = getattr(rule, action_field)
+def change_state(affected_node, node_to_check, field, thing, rule):
+    # If field is `None` the action is "unchanged"
     if field is not None:
+        # Otherwise it means on or off
+        action = 'OFF'
         if field:
             action = 'ON'
-        else:
-            action = 'OFF'
 
-        with task_lock(key=mac, timeout=10):
-            status = change_node_status(ip, thing, action)
+        ip = str(affected_node.ip_addr)
+        mac = str(affected_node.mac_addr)
 
-        status = status
         if thing == 'RELAY':
-            db_update_relay(node.id, status)
+            if affected_node.relay_status != field:
+                with task_lock(key=mac, timeout=10):
+                    status = change_node_status(ip, thing, action)
+                db_update_relay(affected_node.id, status)
+
         elif thing == 'MOTION':
-            db_update_motion(node.id, status)
+            if affected_node.motion_status != field:
+                with task_lock(key=mac, timeout=10):
+                    status = change_node_status(ip, thing, action)
+                db_update_motion(affected_node.id, status)
+
 
 
 @celery.task
 def rules_poll():
     rules = Rule.query.filter_by(type='Event')
-    ids = []
 
+    # Get all the nodes we could reference below
+    ids = set()
     for rule in rules:
-        ids.append(rule.event_node)
+        ids.add(rule.node)
+        ids.add(rule.event_node)
 
-    nodes = Node.query.filter(Node.id.in_(ids)) if ids else []
-
+    # Map node id to node object
     node_info = {}
+    nodes = Node.query.filter(Node.id.in_(ids)) if ids else []
     for node in nodes:
         node_info[node.id] = node
 
+    # For each rule
     for rule in rules:
-        node = node_info[rule.node.id]
-        if node.relay_status != node_info[rule.event_node.id]:
-            change_state(node, rule, 'turn_on', 'RELAY')
-            change_state(node, rule, 'turn_motion_on', 'MOTION')
+        affected_node = node_info[rule.node]
+        node_to_check = node_info[rule.event_node]
+        if affected_node and node_to_check:
+            # If `node_to_check` has the state of `event_node_state` then `affected_node`
+            # should change ITS state to the value of `turn_on`
+            if node_to_check.relay_status == rule.event_node_state:
+                change_state(affected_node, node_to_check, rule.turn_on, 'RELAY', rule)
+            if node_to_check.motion_status == rule.event_node_state:
+                change_state(affected_node, node_to_check, rule.turn_motion_on, 'MOTION', rule)
 
 
 #######################################
@@ -71,13 +83,22 @@ def get_node_status_task(node_id):
             print(e)
             status = ('Erroar', 'Erroar', 'Erroar')
 
-    led_status, motion_status, relay_status = status
-    db_update_relay(node_id, relay_status)
+    try:
+        led_status, motion_status, relay_status, motion_timeout = status
+        db_update_relay(node_id, relay_status)
+    except:
+        pass
+
+    try:
+        motion_timeout = int(motion_timeout) / 1000
+    except:
+        motion_timeout = 5
 
     return {
         'led': led_status,
         'relay': relay_status,
         'motion': motion_status,
+        'motionTimeout': motion_timeout,
     }
 
 
@@ -127,18 +148,24 @@ def toggle_node_task(node_id):
     db_update_relay(node_id, status)
 
 
-def change_motion_task(node_id, status):
+def change_motion_task(node_id, input):
     node = Node.query.filter_by(id=node_id).first()
 
     ip_str = str(node.ip_addr)
     mac = str(node.mac_addr)
 
-    status = status['motion'].upper()
+    status = input['motion'].upper()
 
     with task_lock(key=mac, timeout=15):
         status_reply = change_node_status(ip_str, "MOTION", status)
 
-    # db_update_motion(node_id, status_reply)
+    db_update_motion(node_id, status_reply)
+
+    motion_timeout = input.get('motion_timeout')
+    if motion_timeout:
+        print(motion_timeout, str(motion_timeout))
+        status_reply = change_node_status(ip_str, "TIMEOUT", motion_timeout)
+
 
 
 #######################################
@@ -231,6 +258,12 @@ def add_rule_task(node_id, rule):
 def delete_node_task(node_id):
     try:
         node = Node.query.get(node_id)
+        if node.rules:
+            for rule in node.rules:
+                db.session.delete(rule)
+
+        rules = Rule.query.filter_by(event_node=node_id).delete()
+
         db.session.delete(node)
         db.session.commit()
         return {'result': node.id}

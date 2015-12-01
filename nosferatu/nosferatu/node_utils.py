@@ -193,7 +193,7 @@ def get_node_status(ip, status_type="ALL", send_port=DEFAULT_SEND_PORT):
 
     if status_type == 'ALL':
         result = tuple(status.title() for status in status.strip(' \t\r\n').split("&"))
-        assert(len(result) == 3)
+        assert(len(result) == 4)
         return result
     else:
         if status == 'OFF':

@@ -84,15 +84,21 @@ def get_node_status_task(node_id):
             status = ('Erroar', 'Erroar', 'Erroar')
 
     try:
-        led_status, motion_status, relay_status = status
+        led_status, motion_status, relay_status, motion_timeout = status
         db_update_relay(node_id, relay_status)
     except:
         pass
+
+    try:
+        motion_timeout = int(motion_timeout) / 1000
+    except:
+        motion_timeout = 5
 
     return {
         'led': led_status,
         'relay': relay_status,
         'motion': motion_status,
+        'motionTimeout': motion_timeout,
     }
 
 
@@ -142,18 +148,24 @@ def toggle_node_task(node_id):
     db_update_relay(node_id, status)
 
 
-def change_motion_task(node_id, status):
+def change_motion_task(node_id, input):
     node = Node.query.filter_by(id=node_id).first()
 
     ip_str = str(node.ip_addr)
     mac = str(node.mac_addr)
 
-    status = status['motion'].upper()
+    status = input['motion'].upper()
 
     with task_lock(key=mac, timeout=15):
         status_reply = change_node_status(ip_str, "MOTION", status)
 
-    # db_update_motion(node_id, status_reply)
+    db_update_motion(node_id, status_reply)
+
+    motion_timeout = input.get('motion_timeout')
+    if motion_timeout:
+        print(motion_timeout, str(motion_timeout))
+        status_reply = change_node_status(ip_str, "TIMEOUT", motion_timeout)
+
 
 
 #######################################

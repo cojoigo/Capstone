@@ -7,6 +7,8 @@ angular.module('nosferatuApp').controller('nodeSettingsController',
         @addedRules = []
         @motionStatus = 'Off'
         @relayStatus = false
+        @MotionTimeout = 5
+        @newMotionTimeout = ''
 
         $scope.$watchCollection(
             angular.bind(this, () -> return @addedRules),
@@ -44,6 +46,9 @@ angular.module('nosferatuApp').controller('nodeSettingsController',
             data = {
                 'motion': status,
             }
+            if self.newMotionTimeout isnt self.motionTimeout
+                data['motion_timeout'] = self.newMotionTimeout
+
             $http.post("/nodes/#{self.node.id}/motion", data).then((results) ->
                 $log.log("Motion should be changed")
             ).catch(errFunc)
@@ -88,6 +93,7 @@ angular.module('nosferatuApp').controller('nodeSettingsController',
                                 date = new Date()
                                 self.lastUpdate = date.toLocaleString()
                                 self.motionStatus = results.data.motion
+                                self.motionTimeout = results.data.motionTimeout
 
                         # Continue to call the poller every 5 seconds until its canceled
                         time = $timeout(poller, 1000)

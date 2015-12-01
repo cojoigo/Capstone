@@ -18,9 +18,6 @@
     <hr />
 
     <tabset vertical="true">
-      <tab heading="Global">
-        <h1>Global Status and Settings</h1>
-      </tab>
       <tab ng-repeat="node in main.nodes" ng-class="{[node.status]}">
         <tab-heading>
           {[node.name]}
@@ -54,7 +51,14 @@
                 </button>
                 <div>
                   <label style="float: left;">Motion timeout (seconds):</label>
-                  <input type="text" placeholder="5" max-width="30px" style="float: right;"></input>
+                  <input
+                    type="text"
+                    placeholder="{[ settings.motionTimeout ]}"
+                    ng-model="settings.newMotionTimeout"
+                    max-width="30px"
+                    style="float: right;"
+                  ></input>
+                </div>
               </div>
               <div class="small-4 columns">
               </div>

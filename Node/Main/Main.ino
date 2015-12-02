@@ -14,7 +14,6 @@ int LED = D0;
 int pirPin = D1;
 int Relay = D2;
 int Button = D3;
-int LED2 = D4;
 
 int motionTime; //global timer for motion
 int motionEnable; //local motion enable, for timing etc
@@ -241,6 +240,7 @@ String parseCmd(String command)
     else
     {
       CtrlMotion("ON");
+      CtrlRelay("OFF");
       testMode = 0;
       Serial.println("Done testing");
       return "OK";
@@ -252,11 +252,11 @@ String parseCmd(String command)
 
 void loop() 
 {
-  //if (digitalRead(Button) == HIGH)
-  //{//Toggle Relay state and disable motion
-  //  CtrlRelay("TOGGLE");
-  //  CtrlMotion("OFF");
-  //}
+  if (digitalRead(Button) == LOW)
+  {//Toggle Relay state and disable motion
+    CtrlRelay("TOGGLE");
+    CtrlMotion("OFF");
+  }
   if (isServer)
   {
     serverLoop();
@@ -405,7 +405,7 @@ String CtrlRelay(String cmd)
 
 void testEverything()
 {
-  blinkCounter = 1500 + millis();
+  blinkCounter = 500 + millis();
   CtrlLED("TOGGLE");
   CtrlRelay("TOGGLE");
 }

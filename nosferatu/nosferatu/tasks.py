@@ -82,7 +82,7 @@ def get_node_status_task(node_id):
         led_status, motion_status, relay_status, motion_timeout = status
         db_update_relay(node_id, relay_status)
     except:
-        pass
+        led_status, motion_status, relay_status, motion_timeout = 'Erroar', 'Erroar', 'Erroar', 'Erroar'
 
     try:
         motion_timeout = int(motion_timeout) / 1000
@@ -108,27 +108,7 @@ def test_node_task(args):
 
 
 def find_nodes_task():
-    nodes = find_nodes()
-
-    nodes = {
-        'a0:2b:03:c3:f3:12': {
-            'ip': '1.2.3.4',
-            'mac': 'a0:2b:03:c3:f3:12',
-            'on': True,
-        },
-        'a0:2b:03:c3:f5:12': {
-            'ip': '2.2.3.4',
-            'mac': 'a0:2b:03:c3:f5:12',
-            'on': False,
-        },
-        'a0:2b:03:c3:f4:12': {
-            'ip': '3.2.3.4',
-            'mac': 'a0:2b:03:c3:f4:12',
-            'on': True,
-        },
-    }
-
-    return nodes
+    return find_nodes()
 
 
 def toggle_node_task(node_id):

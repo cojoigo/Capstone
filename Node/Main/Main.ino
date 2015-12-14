@@ -11,8 +11,8 @@ unsigned long int counter;
 unsigned long int blinkCounter;
 
 int LED = D0;
-int pirPin = D1;
-int Relay = D2;
+int pirPin = D6;
+int Relay = D7;
 int Button = D3;
 
 int motionTime; //global timer for motion
@@ -252,11 +252,12 @@ String parseCmd(String command)
 
 void loop() 
 {
-  if (digitalRead(Button) == LOW)
-  {//Toggle Relay state and disable motion
-    CtrlRelay("TOGGLE");
-    CtrlMotion("OFF");
-  }
+  //if (digitalRead(Button) == LOW)
+  //{//Toggle Relay state and disable motion
+  //  CtrlRelay("TOGGLE");
+  //  CtrlMotion("OFF");
+  //  CtrlLED("TOGGLE");
+  //}
   if (isServer)
   {
     serverLoop();
